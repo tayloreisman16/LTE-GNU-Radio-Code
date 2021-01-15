@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<block>
+  <name>BitRecovery</name>
+  <key>OFDMReceiver_BitRecovery</key>
+  <category>[OFDMReceiver]</category>
+  <import>import OFDMReceiver</import>
+  <make>OFDMReceiver.BitRecovery($modulation, $directory_name, $diagnostics)</make>
+
+  <param>
+    <name>Modulation</name>
+    <key>modulation</key>
+    <type>string</type>
+  </param>
+
+  <param>
+    <name>Directory Name</name>
+    <key>directory_name</key>
+    <type>string</type>
+  </param>
+
+
+  <param>
+    <name>Diagnostics</name>
+    <key>diagnostics</key>
+    <type>int</type>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+
+</block>

@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<block>
+  <name>SynchEstAndFO</name>
+  <key>OFDMReceiver_SynchEstAndFO</key>
+  <category>[OFDMReceiver]</category>
+  <import>import OFDMReceiver</import>
+  <make>OFDMReceiver.SynchEstAndFO($case, $fo_range, $directory_name, $file_name_cest, $diagnostics)</make>
+
+
+  <param>
+    <name>Case Number</name>
+    <key>case</key>
+    <type>int</type>
+  </param>
+
+
+  <param>
+    <name>F Offset Range</name>
+    <key>fo_range</key>
+    <type>raw</type>
+  </param>
+
+  <param>
+    <name>Directory Path</name>
+    <key>directory_name</key>
+    <type>string</type>
+  </param>
+
+
+  <param>
+    <name>Var: Chan Est -- File Name</name>
+    <key>file_name_cest</key>
+    <type>string</type>
+  </param>
+
+  <param>
+    <name>Diagnostics</name>
+    <key>diagnostics</key>
+    <type>int</type>
+  </param>
+
+
+
+  <!-- Make one 'sink' node per input. Sub-nodes:
+       * name (an identifier for the GUI)
+       * type
+       * vlen
+       * optional (set to 1 for optional inputs) -->
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+
+  <!-- Make one 'source' node per output. Sub-nodes:
+       * name (an identifier for the GUI)
+       * type
+       * vlen
+       * optional (set to 1 for optional inputs) -->
+  <source>
+    <name>out</name>
+    <type>complex</type>
+  </source>
+</block>

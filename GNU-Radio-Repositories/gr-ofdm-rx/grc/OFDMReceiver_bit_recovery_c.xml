@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<block>
+  <name>Bit Recovery QPSK</name>
+  <key>OFDMReceiver_bit_recovery_c</key>
+  <category>[OFDMReceiver]</category>
+  <import>import OFDMReceiver</import>
+  <make>OFDMReceiver.bit_recovery_c($directory_name, $diagnostics)</make>
+
+  <param>
+    <name>Directory Name</name>
+    <key>directory_name</key>
+    <type>string</type>
+  </param>
+
+
+  <param>
+    <name>Diagnostics</name>
+    <key>diagnostics</key>
+    <type>int</type>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+
+</block>
+

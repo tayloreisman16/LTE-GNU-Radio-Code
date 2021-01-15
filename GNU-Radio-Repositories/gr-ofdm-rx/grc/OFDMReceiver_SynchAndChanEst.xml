@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<block>
+  <name>SynchAndChanEst</name>
+  <key>OFDMReceiver_SynchAndChanEst</key>
+  <category>[OFDMReceiver]</category>
+  <import>import OFDMReceiver</import>
+  <make>OFDMReceiver.SynchAndChanEst($num_ofdm_symb, $nfft, $cp_len, $num_synch_bins, $synch_dat, $num_data_bins, $SNR, $directory_name, $file_name_cest, $diagnostics)</make>
+  <!-- Make one 'param' node for every Parameter you want settable from the GUI.
+       Sub-nodes:
+       * name
+       * key (makes the value accessible as $keyname, e.g. in the make node)
+       * type -->
+
+  <param>
+    <name>No of OFDM symbols</name>
+    <key>num_ofdm_symb</key>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>FFT Size</name>
+    <key>nfft</key>
+    <type>int</type>
+  </param>
+
+    <param>
+    <name>CP Len</name>
+    <key>cp_len</key>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>No of Synch Bins</name>
+    <key>num_synch_bins</key>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>Synch Data Pattern</name>
+    <key>synch_dat</key>
+    <type>raw</type>
+  </param>
+
+  <param>
+    <name>No of Data Bins</name>
+    <key>num_data_bins</key>
+    <type>int</type>
+  </param>
+
+  <param>
+    <name>SNR</name>
+    <key>SNR</key>
+    <type>int</type>
+  </param>
+
+
+  <param>
+    <name>Directory Path</name>
+    <key>directory_name</key>
+    <type>string</type>
+  </param>
+
+
+  <param>
+    <name>Var: Chan Est -- File Name</name>
+    <key>file_name_cest</key>
+    <type>string</type>
+  </param>
+
+  <param>
+    <name>Diagnostics</name>
+    <key>diagnostics</key>
+    <type>int</type>
+  </param>
+
+  <!-- Make one 'sink' node per input. Sub-nodes:
+       * name (an identifier for the GUI)
+       * type
+       * vlen
+       * optional (set to 1 for optional inputs) -->
+  <sink>
+    <name>in</name>
+    <type>complex</type>
+  </sink>
+
+  <!-- Make one 'source' node per output. Sub-nodes:
+       * name (an identifier for the GUI)
+       * type
+       * vlen
+       * optional (set to 1 for optional inputs) -->
+  <source>
+    <name>out</name>
+    <type>complex</type>
+  </source>
+</block>
