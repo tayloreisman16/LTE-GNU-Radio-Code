@@ -18,8 +18,8 @@
 # Boston, MA 02110-1301, USA.
 
 install(FILES
-    OFDMTransmitter_OFDMTxWithTimer.xml
-    OFDMTransmitter_OFDMTransmitter.xml
-    OFDMTransmitter_SimpleTx.xml
-    OFDMTransmitter_SimpleTx.xml DESTINATION share/gnuradio/grc/blocks
+    OFDMTransmitter_OFDMTxWithTimer.block.yml
+    OFDMTransmitter_OFDMTransmitter.block.yml
+    OFDMTransmitter_SimpleTx.block.yml
+    OFDMTransmitter_SimpleTx.block.yml DESTINATION share/gnuradio/grc/blocks
 )
