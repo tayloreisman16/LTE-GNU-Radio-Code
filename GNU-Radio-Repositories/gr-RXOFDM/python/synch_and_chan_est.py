@@ -7,12 +7,16 @@
 #
 
 
-import numpy
+import numpy as np
+import pickle
+import datetime
+import matplotlib.pyplot as plt
 from gnuradio import gr
 
 
 class synch_and_chan_est(gr.sync_block):
-    def __init__(self, num_ofdm_symb, nfft, cp_len, num_synch_bins, synch_dat, num_data_bins, snr, directory_name, file_name_cest, diagnostics, genie):
+    def __init__(self, num_ofdm_symb, nfft, cp_len,
+                 num_synch_bins, synch_dat, num_data_bins, snr, directory_name, file_name_cest, diagnostics, genie):
         self.num_ofdm_symb = num_ofdm_symb
         self.nfft = nfft
         self.cp_len = cp_len
@@ -45,10 +49,11 @@ class synch_and_chan_est(gr.sync_block):
         self.synch_dat = synch_dat  # example [1, 1] or [2, 1]
 
         self.M = [self.synch_dat[0], self.num_synch_bins]
-        self.MM = np.prod(self.M)
+        self.MM = int(np.prod(self.M))
 
         # Zadoff Chu Generation
         self.p = 37
+        xx = 0
         if self.num_synch_bins % 2 == 0:
             tmp0 = np.array(range(self.MM))
             xx = tmp0 * tmp0
@@ -113,11 +118,25 @@ class synch_and_chan_est(gr.sync_block):
             num_bins1 = 4 * np.floor(num_bins0 / 4)
             all_bins = np.array(list(range(-int(num_bins1 / 2), 0)) + list(range(1, int(num_bins1 / 2) + 1)))
             self.used_bins = (self.nfft + all_bins)
-        
+
         gr.sync_block.__init__(self,
                                name="SynchAndChanEst",
                                in_sig=[np.complex64],
                                out_sig=[np.complex64])
+
+    def give_genie_chan(self):
+        h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
+        channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
+        channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.NFFT)), dtype=complex)
+        if self.num_ant_txrx == 1:
+            h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+        for rx in range(self.num_ant_txrx):
+            for tx in range(self.num_ant_txrx):
+                channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
+                channel_freq[rx, tx, :] = np.fft.fft(self.channel_time[rx, tx, 0:len(h[rx, tx])], self.NFFT)
+
+        genie_chan_time = channel_time
+        return genie_chan_time
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
@@ -135,7 +154,8 @@ class synch_and_chan_est(gr.sync_block):
                 tmp_1vec = np.zeros((self.M[0], self.nfft), dtype=complex)
                 for LL in list(range(self.M[0])):
                     tmp_1vec[LL][:] = np.fft.fft(self.rx_data_time[0][LL * self.nfft:(LL + 1) * self.nfft], self.nfft)
-                    self.synchdat00[0][LL * self.num_synch_bins:(LL + 1) * self.num_synch_bins] = tmp_1vec[LL][self.synch_bins_used_P]
+                    self.synchdat00[0][LL * self.num_synch_bins:(LL + 1) * self.num_synch_bins] = \
+                        tmp_1vec[LL][self.synch_bins_used_P]
 
                 synchdat0 = np.reshape(self.synchdat00, (1, self.num_synch_bins * self.M[0]))
                 # print(synchdat0.shape)
@@ -173,7 +193,7 @@ class synch_and_chan_est(gr.sync_block):
                         self.est_chan_freq_P[self.cor_obs][:] = chan_est1[0][:]
 
                         if self.diagnostic == 1 and self.count == 40 and self.genie == 1:
-                            chan_q = give_genie_channel()
+                            chan_q = self.give_genie_channel()
                             xax = np.array(range(0, self.nfft)) * self.fs / self.nfft
                             yax1 = 20 * np.log10(abs(chan_est1))
                             yax2 = 20 * np.log10(abs(np.fft.fft(chan_q, self.nfft)))
@@ -188,7 +208,8 @@ class synch_and_chan_est(gr.sync_block):
 
                             date_time = datetime.datetime.now().strftime('%Y_%m_%d_%Hh_%Mm')
 
-                            f = open(str(self.directory_name) + str(date_time) + str(self.file_name_cest) + '.pckl', 'wb')
+                            f = open(str(
+                                self.directory_name) + str(date_time) + str(self.file_name_cest) + '.pckl', 'wb')
                             pickle.dump(chan_est_tim, f, protocol=2)
                             f.close()
 
@@ -244,16 +265,3 @@ class synch_and_chan_est(gr.sync_block):
         self.count += 1
         self.cor_obs = 0
         return len(output_items[0])
-    
-    def give_genie_chan(self):
-        h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
-        if self.num_ant_txrx == 1:
-            h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
-        for rx in range(self.num_ant_txrx):
-            for tx in range(self.num_ant_txrx):
-                channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
-                channel_freq[rx, tx, :] = np.fft.fft(self.channel_time[rx, tx, 0:len(h[rx, tx])], self.NFFT)
-                h_f[rx, tx, :] = channel_freq[rx, tx, self.used_bins.astype(int)]
-
-        genie_chan_time = channel_time
-        return genie_chan_time

@@ -69,9 +69,9 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [968, 185]
+    coordinate: [987, 726]
     rotation: 0
-    state: true
+    state: disabled
 - name: TXOFDM_tx_signal_transmitter_0
   id: TXOFDM_tx_signal_transmitter
   parameters:
@@ -109,8 +109,7 @@ blocks:
     state: true
 
 connections:
-- [RXOFDM_synch_and_chan_est_0, '0', blocks_null_sink_0, '0']
-- [TXOFDM_tx_signal_transmitter_0, '0', RXOFDM_synch_and_chan_est_0, '0']
+- [TXOFDM_tx_signal_transmitter_0, '0', blocks_null_sink_0, '0']
 
 metadata:
   file_format: 1
