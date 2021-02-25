@@ -1,6 +1,6 @@
-id: OFDMTransmitter_SimpleTx
-label: SimpleTx
-category: '[OFDMTransmitter]'
+id: TXOFDM_tx_signal_transmitter
+label: tx_signal_transmitter
+category: '[OFDM Transmitter]'
 
 parameters:
 -   id: case
@@ -9,13 +9,16 @@ parameters:
 -   id: pickle_directory
     label: Pickle Directory
     dtype: string
+-   id: pickle_file
+    label: Pickle File
+    dtype: string
 
 outputs:
 -   domain: stream
     dtype: complex
 
 templates:
-    imports: import OFDMTransmitter
-    make: OFDMTransmitter.SimpleTx(${case}, ${pickle_directory})
+    imports: import TXOFDM
+    make: TXOFDM.tx_signal_transmitter(${case}, ${pickle_directory}, ${pickle_file})
 
 file_format: 1

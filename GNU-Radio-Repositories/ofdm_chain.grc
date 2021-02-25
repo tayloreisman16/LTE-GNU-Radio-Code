@@ -1,0 +1,116 @@
+options:
+  parameters:
+    author: ''
+    catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: ofdm_chain
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: Not titled yet
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '32000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 12]
+    rotation: 0
+    state: enabled
+- name: RXOFDM_synch_and_chan_est_0
+  id: RXOFDM_synch_and_chan_est
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    cp_len: '16'
+    diagnostics: '1'
+    directory_name: '/srv/LTE-GNU-Radio-Code/DATA/
+
+      '
+    file_name_cest: output_file
+    genie: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    nfft: '64'
+    num_data_bins: '60'
+    num_ofdm_symb: '24'
+    num_synch_bins: '64'
+    snr: '50'
+    synch_dat: '[1, 3]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [968, 185]
+    rotation: 0
+    state: true
+- name: TXOFDM_tx_signal_transmitter_0
+  id: TXOFDM_tx_signal_transmitter
+  parameters:
+    affinity: ''
+    alias: ''
+    case: '0'
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    pickle_directory: /srv/LTE-Code-Offline/Data/
+    pickle_file: tx_data_offline.pckl
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [659, 253]
+    rotation: 0
+    state: true
+- name: blocks_null_sink_0
+  id: blocks_null_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    bus_structure_sink: '[[0,],]'
+    comment: ''
+    num_inputs: '1'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1321, 327]
+    rotation: 0
+    state: true
+
+connections:
+- [RXOFDM_synch_and_chan_est_0, '0', blocks_null_sink_0, '0']
+- [TXOFDM_tx_signal_transmitter_0, '0', RXOFDM_synch_and_chan_est_0, '0']
+
+metadata:
+  file_format: 1

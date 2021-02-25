@@ -10,14 +10,14 @@ import pickle
 from gnuradio import gr
 
 
-class SimpleTx(gr.sync_block):
+class tx_signal_transmitter(gr.sync_block):
 
-    def __init__(self, case, pickle_directory):
+    def __init__(self, case, pickle_directory, pickle_file):
         gr.sync_block.__init__(self,
                                name="SimpleTx",
                                in_sig=None,
                                out_sig=[np.complex64])
-        f = open(str(pickle_directory) + '/' + 'tx_data_' + str(case) + '.pckl')
+        f = open(str(pickle_directory) + str(pickle_file))
         self.tx_data = pickle.load(f)
         f.close()
 
