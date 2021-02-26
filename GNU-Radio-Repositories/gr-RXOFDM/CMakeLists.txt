@@ -74,7 +74,7 @@ ENDIF()
 # Install directories
 ########################################################################
 include(FindPkgConfig)
-find_package(Gnuradio "3.9" REQUIRED)
+find_package(Gnuradio "3.9.0.0" REQUIRED)
 include(GrVersion)
 
 include(GrPlatform) #define LIB_SUFFIX

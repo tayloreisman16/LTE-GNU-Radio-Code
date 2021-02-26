@@ -191,7 +191,7 @@ class synch_and_chan_est(gr.sync_block):
                         chan_est1[0][self.synch_bins_used_P] = chan_est
                         self.est_chan_freq_P[self.cor_obs][:] = chan_est1[0][:]
 
-                        if self.diagnostic == 1 and self.count == 40 and self.genie == 1:
+                        if self.diagnostic == 1 and self.count == 0 and self.genie == 1:
                             chan_q = self.give_genie_channel()
                             xax = np.array(range(0, self.nfft)) * self.fs / self.nfft
                             yax1 = 20 * np.log10(abs(chan_est1))
@@ -250,7 +250,7 @@ class synch_and_chan_est(gr.sync_block):
                 self.est_data_freq[P][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
         # print("P", P)
         # print("Data Est Freq Shape", self.est_data_freq.shape)
-        corr_size = self.num_ofdm_symb/sum(self.synch_dat)
+        corr_size = int(self.num_ofdm_symb/sum(self.synch_dat))
         # print(corr_size)
         # print("Data Est Freq", self.est_data_freq)
         # print(self.est_data_freq[0:corr_size][:])

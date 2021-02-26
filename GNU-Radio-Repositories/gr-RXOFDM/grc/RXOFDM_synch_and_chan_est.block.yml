@@ -1,6 +1,6 @@
 id: RXOFDM_synch_and_chan_est
 label: synch_and_chan_est
-category: '[OFDM Receiver]'
+category: '[RXOFDM]'
 
 parameters:
 -   id: num_ofdm_symb
