@@ -73,7 +73,7 @@ class synch_and_chan_est(gr.sync_block):
         self.bins_used_P = list((np.array(self.bins_used_N) + self.nfft) % self.nfft)
         # print("Bins used P", self.bins_used_P)
         
-        self.cor_obs = -1
+        self.corr_obs = -1
 
         self.del_mat_exp = np.tile(np.exp((1j * (2.0 * np.pi / self.nfft)) * (
             np.outer(list(range(self.cp_len + 1)), list(self.synch_bins_used_P)))), (1, self.M[0]))
@@ -168,15 +168,15 @@ class synch_and_chan_est(gr.sync_block):
                 dmax_val = np.max((abs(self.del_mat)))
 
                 if dmax_val > 0.4 * len(synchdat[0]):
-                    tim_synch_ind = self.time_synch_ref[max(self.cor_obs, 0)][0]
+                    tim_synch_ind = self.time_synch_ref[max(self.corr_obs, 0)][0]
                     if ((P * self.stride_val + self.start_samp - tim_synch_ind > 2 * self.cp_len + self.nfft)
-                            or self.cor_obs == -1):
+                            or self.corr_obs == -1):
 
-                        self.cor_obs += 1
+                        self.corr_obs += 1
 
-                        self.time_synch_ref[self.cor_obs][0] = P * self.stride_val + self.start_samp
-                        self.time_synch_ref[self.cor_obs][1] = dmax_ind
-                        self.time_synch_ref[self.cor_obs][2] = int(dmax_val)
+                        self.time_synch_ref[self.corr_obs][0] = P * self.stride_val + self.start_samp
+                        self.time_synch_ref[self.corr_obs][1] = dmax_ind
+                        self.time_synch_ref[self.corr_obs][2] = int(dmax_val)
 
                         del_vec = self.del_mat_exp[dmax_ind][:]
                         data_recov = np.matmul(np.diag(del_vec), synchdat[0])
@@ -189,7 +189,7 @@ class synch_and_chan_est(gr.sync_block):
 
                         chan_est1 = np.zeros((1, self.nfft), dtype=np.complex)
                         chan_est1[0][self.synch_bins_used_P] = chan_est
-                        self.est_chan_freq_P[self.cor_obs][:] = chan_est1[0][:]
+                        self.est_chan_freq_P[self.corr_obs][:] = chan_est1[0][:]
 
                         if self.diagnostic == 1 and self.count == 0 and self.genie == 1:
                             chan_q = self.give_genie_channel()
@@ -212,16 +212,16 @@ class synch_and_chan_est(gr.sync_block):
                             pickle.dump(chan_est_tim, f, protocol=2)
                             f.close()
 
-                        self.est_chan_time[self.cor_obs][0:self.nfft] = chan_est_tim[0][0:self.nfft]
+                        self.est_chan_time[self.corr_obs][0:self.nfft] = chan_est_tim[0][0:self.nfft]
                         chan_mag = np.matmul(np.diag(chan_est), np.conj(chan_est))
                         eq_gain_0 = [1.0 / self.SNR + vv for vv in chan_mag]
 
                         self.eq_gain = np.divide(np.conj(chan_est), eq_gain_0)
                         self.eq_gain_ext = np.tile(self.eq_gain, self.M[0])
-                        self.est_synch_freq[self.cor_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
+                        self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
         # <+signal processing here+>
 
-        for P in list(range(self.cor_obs+1)):
+        for P in list(range(self.corr_obs + 1)):
 
             if self.time_synch_ref[P][0] + self.M[0] * self.rx_b_len + self.nfft - 1 <= len(in0):
                 data_ptr = int(self.time_synch_ref[P][0] + self.M[0]*self.rx_b_len)
@@ -262,5 +262,5 @@ class synch_and_chan_est(gr.sync_block):
             out[0:np.size(data_out, 1)] = data_out[:, np.newaxis]
             # print(out[0:np.size(data_out, 1)])
         self.count += 1
-        self.cor_obs = 0
+        self.corr_obs = 0
         return len(output_items[0])
