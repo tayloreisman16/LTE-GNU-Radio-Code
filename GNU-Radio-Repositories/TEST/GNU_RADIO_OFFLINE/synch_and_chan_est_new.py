@@ -25,7 +25,6 @@ class SynchAndChanEst(gr.sync_block):
         self.genie = genie
         self.ref_sigs = 0.0
 
-
         self.synch_data = synch_dat
         num_synchdata_patterns = int(np.ceil(self.num_symbols / sum(self.synch_data)))
         num_symbols = sum(self.synch_data) * num_synchdata_patterns
@@ -54,7 +53,6 @@ class SynchAndChanEst(gr.sync_block):
             list(range(-int(self.num_bins1 / 2), 0)) + list(range(1, int(self.num_bins1 / 2) + 1)))
         self.used_bins = (self.nfft + self.all_bins)
 
-
         ref_bins0 = np.random.randint(1, int(self.num_bins1 / 2) + 1, size=int(np.floor(self.num_bins1 * self.ref_sigs / 2)))
         ref_bins = np.unique(ref_bins0)
         ref_only_bins = np.sort(np.concatenate((-ref_bins, ref_bins)))
@@ -62,10 +60,25 @@ class SynchAndChanEst(gr.sync_block):
         self.data_only_bins = (self.nfft + data_only_bins) % self.nfft
         self.ref_only_bins = (self.nfft + ref_only_bins) % self.nfft
         self.used_bins_data = (self.nfft + self.all_bins) % self.nfft
+        self.chan_max_offset = 0
 
         self.num_used_bins = num_data_bins
+        self.num_synch_bins = num_synch_bins
         self.used_bins_synch = num_synch_bins
         self.max_impulse = self.nfft
+
+        # Zadoff Chu Generation
+        self.p = 23
+        xx = 0
+        if self.num_synch_bins % 2 == 0:
+            tmp0 = np.array(range(self.MM))
+            xx = tmp0 * tmp0
+        elif self.num_synch_bins % 2 == 1:
+            tmp0 = np.array(range(self.MM))
+            xx = tmp0 * (tmp0+1)
+
+        tmpvsynch = [(-1j * (2 * np.pi / self.MM) * self.p / 2.0) * kk for kk in xx]
+        self.zadoff_chu = np.exp(tmpvsynch)
 
         self.channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         self.channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)

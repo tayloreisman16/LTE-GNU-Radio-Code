@@ -51,17 +51,19 @@ class synch_and_chan_est(gr.sync_block):
         self.MM = int(np.prod(self.M))
 
         # Zadoff Chu Generation
-        self.p = 37
+        self.p = 23
         xx = 0
-        if self.num_synch_bins % 2 == 0:
-            tmp0 = np.array(range(self.MM))
-            xx = tmp0 * tmp0
-        elif self.num_synch_bins % 2 == 1:
-            tmp0 = np.array(range(self.MM))
-            xx = tmp0 * (tmp0+1)
+        x0 = np.array(range(0, int(self.MM)))
+        x1 = np.array(range(1, int(self.MM) + 1))
+        if self.MM % 2 == 0:
+            self.zadoff_chu = np.exp(-1j * (2 * np.pi / self.MM) * self.p * (x0**2 / 2))
+        else:
+            self.zadoff_chu = np.exp(-1j * (2 * np.pi / self.MM) * self.p * (x0 * x1) / 2)
 
-        tmpvsynch = [(-1j * (2 * np.pi / self.MM) * self.p / 2.0) * kk for kk in xx]
-        self.zadoff_chu = np.exp(tmpvsynch)
+        plt.plot(self.zadoff_chu.real)
+        plt.plot(self.zadoff_chu.imag)
+        plt.title('Reference Zadoff-Chu Signal')
+        plt.show()
         # print(self.zadoff_chu.shape)
         # print(self.M)
         # print(self.synch_bins_used_P)
@@ -167,7 +169,7 @@ class synch_and_chan_est(gr.sync_block):
                 dmax_ind = np.argmax((abs(self.del_mat)))
                 dmax_val = np.max((abs(self.del_mat)))
 
-                if dmax_val > 0.4 * len(synchdat[0]):
+                if dmax_val > 0.45 * len(synchdat[0]):
                     tim_synch_ind = self.time_synch_ref[max(self.corr_obs, 0)][0]
                     if ((P * self.stride_val + self.start_samp - tim_synch_ind > 2 * self.cp_len + self.nfft)
                             or self.corr_obs == -1):

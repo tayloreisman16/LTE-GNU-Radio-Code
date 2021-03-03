@@ -8,7 +8,7 @@ from synch_and_chan_est import synch_and_chan_est
 num_ofdm_symb = 24
 nfft = 64
 cp_len = 16
-num_synch_bins = nfft
+num_synch_bins = nfft - 2
 num_data_bins = 60
 synch_dat = [1, 3]
 snr = 50
