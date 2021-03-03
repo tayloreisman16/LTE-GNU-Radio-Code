@@ -89,7 +89,7 @@ class synch_and_chan_est(gr.sync_block):
         self.SNR = snr
         self.count = 0
 
-        self.diagnostics = diagnostics
+        self.diagnostic = diagnostics
         self.directory_name = directory_name
         self.file_name_cest = file_name_cest
         
@@ -113,13 +113,13 @@ class synch_and_chan_est(gr.sync_block):
     def give_genie_chan(self):
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
-        channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.NFFT)), dtype=complex)
+        channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
         if self.num_ant_txrx == 1:
             h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
                 channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
-                channel_freq[rx, tx, :] = np.fft.fft(self.channel_time[rx, tx, 0:len(h[rx, tx])], self.NFFT)
+                channel_freq[rx, tx, :] = np.fft.fft(channel_time[rx, tx, 0:len(h[rx, tx])], self.nfft)
 
         genie_chan_time = channel_time
         return genie_chan_time
@@ -179,13 +179,13 @@ class synch_and_chan_est(gr.sync_block):
                         self.est_chan_freq_P[self.corr_obs][:] = chan_est1[0][:]
 
                         if self.diagnostic == 1 and self.count == 0 and self.genie == 1:
-                            chan_q = self.give_genie_channel()
+                            chan_q = self.give_genie_chan()
                             xax = np.array(range(0, self.nfft)) * self.fs / self.nfft
                             yax1 = 20 * np.log10(abs(chan_est1))
                             yax2 = 20 * np.log10(abs(np.fft.fft(chan_q, self.nfft)))
 
-                            plt.plot(xax, yax1, 'r')
-                            plt.plot(xax, yax2, 'b')
+                            plt.plot(xax, yax1[0, :], 'r')
+                            plt.plot(xax, yax2[0, 0, :], 'b')
                             plt.show()
 
                         chan_est_tim = np.fft.ifft(chan_est1, self.nfft)
