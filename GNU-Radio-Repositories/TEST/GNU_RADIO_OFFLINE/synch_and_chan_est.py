@@ -27,18 +27,6 @@ class synch_and_chan_est(gr.sync_block):
         
         self.num_synch_bins = num_synch_bins
 
-        # # Zadoff Chu Generation
-        # self.prime_num = 23
-        #
-        # if self.num_synch_bins % 2 == 0:
-        #     seq0 = np.array(range(self.num_synch_bins))
-        #     self.zadoff_chu = np.exp(-1j * (2 * np.pi / self.num_synch_bins) * self.prime_num * seq0 * seq0 / 2)
-        #
-        # elif self.num_synch_bins % 2 == 1:
-        #     seq0 = np.array(range(self.num_synch_bins))
-        #     self.zadoff_chu = np.exp(
-        #         -1j * (2 * np.pi / self.num_synch_bins) * self.prime_num * seq0 * (seq0 + 1) / 2)
-
         self.synch_bins_used_N = (list(range(-int(self.num_synch_bins / 2), 0, 1)) +
                                   list(range(1, int(self.num_synch_bins / 2) + 1, 1)))
 
@@ -64,9 +52,6 @@ class synch_and_chan_est(gr.sync_block):
         plt.plot(self.zadoff_chu.imag)
         plt.title('Reference Zadoff-Chu Signal')
         plt.show()
-        # print(self.zadoff_chu.shape)
-        # print(self.M)
-        # print(self.synch_bins_used_P)
 
         self.num_data_bins = num_data_bins
 
