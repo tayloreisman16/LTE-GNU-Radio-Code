@@ -8,12 +8,12 @@
 
 import numpy as np
 import pickle
-import datetime
+# import datetime
 import matplotlib.pyplot as plt
 from gnuradio import gr
 
 
-class synch_and_chan_est(gr.sync_block):
+class SynchAndChanEst(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
                  num_synch_bins, synch_dat, num_data_bins, snr, directory_name, file_name_cest, diagnostics, genie):
         self.num_ofdm_symb = num_ofdm_symb
@@ -58,14 +58,13 @@ class synch_and_chan_est(gr.sync_block):
         self.bins_used_N = (list(range(-int(self.num_data_bins / 2), 0, 1)) +
                             list(range(1, int(self.num_data_bins / 2) + 1, 1)))
         self.bins_used_P = list((np.array(self.bins_used_N) + self.nfft) % self.nfft)
-        # print("Bins used P", self.bins_used_P)
-        
+
         self.corr_obs = -1
 
         self.del_mat_exp = np.tile(np.exp((1j * (2.0 * np.pi / self.nfft)) * (
             np.outer(list(range(self.cp_len + 1)), list(self.synch_bins_used_P)))), (1, self.M[0]))
 
-        self.stride_val = self.cp_len - 1
+        self.stride_val = 1
         self.start_samp = self.cp_len
         self.rx_b_len = self.nfft + self.cp_len
 
@@ -87,6 +86,7 @@ class synch_and_chan_est(gr.sync_block):
         self.eq_gain_q = []
 
         self.SNR = snr
+        self.SNR_lin = 10 ** (self.SNR / 20)
         self.count = 0
 
         self.diagnostic = diagnostics
@@ -115,7 +115,7 @@ class synch_and_chan_est(gr.sync_block):
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
         if self.num_ant_txrx == 1:
-            h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+            h[0, 0] = np.array([0.7954 - 0.3977j, 0.3977, -0.1988, 0.0994, -0.0398])
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
                 channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
@@ -144,7 +144,6 @@ class synch_and_chan_est(gr.sync_block):
                         tmp_1vec[LL][self.synch_bins_used_P]
 
                 synchdat0 = np.reshape(self.synchdat00, (1, self.num_synch_bins * self.M[0]))
-                # print(synchdat0.shape)
                 p_est = np.sqrt(len(synchdat0[0]) / sum(np.multiply(synchdat0[0][:], np.conj(synchdat0[0][:]))))
 
                 synchdat = [p_est * kk for kk in synchdat0]
@@ -154,7 +153,7 @@ class synch_and_chan_est(gr.sync_block):
                 dmax_ind = np.argmax((abs(self.del_mat)))
                 dmax_val = np.max((abs(self.del_mat)))
 
-                if dmax_val > 0.45 * len(synchdat[0]):
+                if dmax_val > 0.40 * len(synchdat[0]):
                     tim_synch_ind = self.time_synch_ref[max(self.corr_obs, 0)][0]
                     if ((P * self.stride_val + self.start_samp - tim_synch_ind > 2 * self.cp_len + self.nfft)
                             or self.corr_obs == -1):
@@ -168,7 +167,7 @@ class synch_and_chan_est(gr.sync_block):
                         del_vec = self.del_mat_exp[dmax_ind][:]
                         data_recov = np.matmul(np.diag(del_vec), synchdat[0])
 
-                        zcwn = [(1.0 / self.SNR) + qq for qq in np.ones(len(self.zadoff_chu))]
+                        zcwn = [(1.0 / self.SNR_lin) + qq for qq in np.ones(len(self.zadoff_chu))]
                         tmp_v1 = np.divide(np.matmul(np.diag(data_recov), np.conj(self.zadoff_chu)), zcwn)
 
                         chan_est00 = np.reshape(tmp_v1, (self.M[0], self.L_synch))
@@ -180,22 +179,24 @@ class synch_and_chan_est(gr.sync_block):
 
                         if self.diagnostic == 1 and self.count == 0 and self.genie == 1:
                             chan_q = self.give_genie_chan()
-                            xax = np.array(range(0, self.nfft)) * self.fs / self.nfft
+                            xax = np.array(range(0, self.nfft - 2))
                             yax1 = 20 * np.log10(abs(chan_est1))
                             yax2 = 20 * np.log10(abs(np.fft.fft(chan_q, self.nfft)))
+                            ypred = [x for i, x in enumerate(yax1[0, 1:]) if i != 31]
+                            ygeni = [x for i, x in enumerate(yax2[0, 0, 1:]) if i != 31]
 
-                            plt.plot(xax, yax1[0, :], 'r')
-                            plt.plot(xax, yax2[0, 0, :], 'b')
+                            plt.plot(xax, ypred, 'r')
+                            plt.plot(xax, ygeni, 'b')
                             plt.show()
 
                         chan_est_tim = np.fft.ifft(chan_est1, self.nfft)
 
                         if self.diagnostic == 1:
 
-                            date_time = datetime.datetime.now().strftime('%Y_%m_%d_%Hh_%Mm')
+                            # date_time = datetime.datetime.now().strftime('%Y_%m_%d_%Hh_%Mm')
 
                             f = open(str(
-                                self.directory_name) + str(date_time) + '_' + str(self.file_name_cest), 'wb')
+                                self.directory_name) + '_' + str(self.file_name_cest), 'wb')
                             pickle.dump(chan_est_tim, f, protocol=2)
                             f.close()
 
@@ -206,18 +207,17 @@ class synch_and_chan_est(gr.sync_block):
                         self.eq_gain = np.divide(np.conj(chan_est), eq_gain_0)
                         self.eq_gain_ext = np.tile(self.eq_gain, self.M[0])
                         self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
-        # <+signal processing here+>
 
         for P in list(range(self.corr_obs + 1)):
 
             if self.time_synch_ref[P][0] + self.M[0] * self.rx_b_len + self.nfft - 1 <= len(in0):
                 data_ptr = int(self.time_synch_ref[P][0] + self.M[0]*self.rx_b_len)
-                print("data pointer", data_ptr)
+                # print("data pointer", data_ptr)
 
                 data_buff_time = in0[data_ptr: data_ptr + self.nfft]
 
                 t_vec = np.fft.fft(data_buff_time, self.nfft)
-                # print(self.bins_used_P)
+
                 freq_data_0 = t_vec[self.bins_used_P]
                 p_est0 = np.sqrt(len(freq_data_0)/(np.dot(freq_data_0, np.conj(freq_data_0))))
 
@@ -235,19 +235,13 @@ class synch_and_chan_est(gr.sync_block):
                 self.eq_gain_q = np.divide(np.conj(chan_est_dat), eq_gain_z)
 
                 self.est_data_freq[P][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
-        # print("P", P)
-        # print("Data Est Freq Shape", self.est_data_freq.shape)
+
         corr_size = int(self.num_ofdm_symb/sum(self.synch_dat))
-        # print(corr_size)
-        # print("Data Est Freq", self.est_data_freq)
-        # print(self.est_data_freq[0:corr_size][:])
+
         data_out = np.reshape(self.est_data_freq[0:corr_size][:], (1, corr_size * np.size(self.est_data_freq, 1)))
-        # print(data_out.shape)
 
         if self.count > 0:
-            # out[0:data_out.shape[1]] = data_out
             out[0:np.size(data_out, 1)] = data_out[:, np.newaxis]
-            # print(out[0:np.size(data_out, 1)])
         self.count += 1
         self.corr_obs = 0
         return len(output_items[0])
