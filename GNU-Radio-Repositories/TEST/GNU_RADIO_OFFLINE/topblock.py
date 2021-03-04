@@ -15,7 +15,7 @@ snr = 50
 diagnostics = 1
 genie = 1
 
-pickle_directory = '/srv/LTE-GNU-Radio-Code/GNU-Radio-Repositories/TEST/GNU_RADIO_OFFLINE/'
+pickle_directory = '/srv/LTE-Code-Offline/Data/'
 pickle_file = 'tx_data_offline.pckl'
 directory_name = '/srv/LTE-GNU-Radio-Code/GNU-Radio-Repositories/TEST/GNU_RADIO_OFFLINE/Output/'
 file_name_cest = 'output_data.pckl'

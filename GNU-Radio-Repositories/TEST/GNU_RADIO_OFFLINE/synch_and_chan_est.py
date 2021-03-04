@@ -40,7 +40,7 @@ class synch_and_chan_est(gr.sync_block):
 
         # Zadoff Chu Generation
         self.p = 23
-        xx = 0
+
         x0 = np.array(range(0, int(self.MM)))
         x1 = np.array(range(1, int(self.MM) + 1))
         if self.MM % 2 == 0:
@@ -190,12 +190,12 @@ class synch_and_chan_est(gr.sync_block):
 
                         chan_est_tim = np.fft.ifft(chan_est1, self.nfft)
 
-                        if self.diagnostics == 1:
+                        if self.diagnostic == 1:
 
                             date_time = datetime.datetime.now().strftime('%Y_%m_%d_%Hh_%Mm')
 
                             f = open(str(
-                                self.directory_name) + str(date_time) + str(self.file_name_cest) + '.pckl', 'wb')
+                                self.directory_name) + str(date_time) + '_' + str(self.file_name_cest), 'wb')
                             pickle.dump(chan_est_tim, f, protocol=2)
                             f.close()
 
