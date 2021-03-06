@@ -1,8 +1,7 @@
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
-import matplotlib.axes as axes
-from synch_and_chan_est import synch_and_chan_est
+from synch_and_chan_est import SynchAndChanEst
 # from TXRX_Parameters import sdr_profile
 
 num_ofdm_symb = 24
@@ -11,7 +10,8 @@ cp_len = 16
 num_synch_bins = nfft - 2
 num_data_bins = 60
 synch_dat = [1, 3]
-snr = 50
+snr = 100
+scale_factor_gate = 0.60
 diagnostics = 1
 genie = 1
 
@@ -33,7 +33,7 @@ plt.show()
 
 out_buffer = np.zeros((1, len(tx_data[0][:])), dtype=complex)
 
-block = synch_and_chan_est(num_ofdm_symb, nfft, cp_len,
-                           num_synch_bins, synch_dat, num_data_bins, snr, directory_name, file_name_cest, diagnostics,
-                           genie)
+block = SynchAndChanEst(num_ofdm_symb, nfft, cp_len,
+                        num_synch_bins, synch_dat, num_data_bins, snr, scale_factor_gate, directory_name, file_name_cest, diagnostics,
+                        genie)
 output_buffer = block.work(tx_data, out_buffer)

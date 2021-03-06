@@ -15,11 +15,13 @@ from gnuradio import gr
 
 class SynchAndChanEst(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
-                 num_synch_bins, synch_dat, num_data_bins, snr, directory_name, file_name_cest, diagnostics, genie):
+                 num_synch_bins, synch_dat, num_data_bins, snr, scale_factor_gate, directory_name,
+                 file_name_cest, diagnostics, genie):
         self.num_ofdm_symb = num_ofdm_symb
         self.nfft = nfft
         self.cp_len = cp_len
         self.genie = genie
+        self.scale_factor_gate = scale_factor_gate
 
         self.channel_band = 960e3 * 0.97
         self.fs = self.channel_band
@@ -64,7 +66,7 @@ class SynchAndChanEst(gr.sync_block):
         self.del_mat_exp = np.tile(np.exp((1j * (2.0 * np.pi / self.nfft)) * (
             np.outer(list(range(self.cp_len + 1)), list(self.synch_bins_used_P)))), (1, self.M[0]))
 
-        self.stride_val = 1
+        self.stride_val = 16
         self.start_samp = self.cp_len
         self.rx_b_len = self.nfft + self.cp_len
 
@@ -115,7 +117,7 @@ class SynchAndChanEst(gr.sync_block):
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
         if self.num_ant_txrx == 1:
-            h[0, 0] = np.array([0.7954 - 0.3977j, 0.3977, -0.1988, 0.0994, -0.0398])
+            h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
                 channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
@@ -153,7 +155,7 @@ class SynchAndChanEst(gr.sync_block):
                 dmax_ind = np.argmax((abs(self.del_mat)))
                 dmax_val = np.max((abs(self.del_mat)))
 
-                if dmax_val > 0.40 * len(synchdat[0]):
+                if dmax_val > self.scale_factor_gate * len(synchdat[0]):
                     tim_synch_ind = self.time_synch_ref[max(self.corr_obs, 0)][0]
                     if ((P * self.stride_val + self.start_samp - tim_synch_ind > 2 * self.cp_len + self.nfft)
                             or self.corr_obs == -1):
@@ -212,7 +214,6 @@ class SynchAndChanEst(gr.sync_block):
 
             if self.time_synch_ref[P][0] + self.M[0] * self.rx_b_len + self.nfft - 1 <= len(in0):
                 data_ptr = int(self.time_synch_ref[P][0] + self.M[0]*self.rx_b_len)
-                # print("data pointer", data_ptr)
 
                 data_buff_time = in0[data_ptr: data_ptr + self.nfft]
 
