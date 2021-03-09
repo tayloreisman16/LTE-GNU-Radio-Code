@@ -218,28 +218,28 @@ class SynchAndChanEst(gr.sync_block):
 
             if self.time_synch_ref[0][0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
                 data_ptr = int(self.time_synch_ref[0][0] + self.M[0] * self.rx_b_len * (P + 1))
+                for N in range(self.synch_dat[1]):
+                    data_buff_time = in0[data_ptr + self.rx_b_len * N: data_ptr + self.rx_b_len * N + self.nfft]
 
-                data_buff_time = in0[data_ptr: data_ptr + self.nfft]
+                    t_vec = np.fft.fft(data_buff_time, self.nfft)
 
-                t_vec = np.fft.fft(data_buff_time, self.nfft)
+                    freq_data_0 = t_vec[self.bins_used_P]
+                    p_est0 = np.sqrt(len(freq_data_0)/(np.dot(freq_data_0, np.conj(freq_data_0))))
 
-                freq_data_0 = t_vec[self.bins_used_P]
-                p_est0 = np.sqrt(len(freq_data_0)/(np.dot(freq_data_0, np.conj(freq_data_0))))
+                    data_recov_0 = freq_data_0 * p_est0
 
-                data_recov_0 = freq_data_0 * p_est0
+                    arg_val = ([((1j * (2 * np.pi / self.nfft)) *
+                                 self.time_synch_ref[P][1]) * kk for kk in self.bins_used_P])
 
-                arg_val = ([((1j * (2 * np.pi / self.nfft)) *
-                             self.time_synch_ref[P][1]) * kk for kk in self.bins_used_P])
+                    data_recov_z = np.matmul(np.diag(data_recov_0), np.exp(arg_val))
 
-                data_recov_z = np.matmul(np.diag(data_recov_0), np.exp(arg_val))
+                    chan_est_dat = self.est_chan_freq_P[0][self.bins_used_P]
 
-                chan_est_dat = self.est_chan_freq_P[P][self.bins_used_P]
+                    chan_mag_z = np.matmul(np.diag(chan_est_dat), np.conj(chan_est_dat))
+                    eq_gain_z = [1.0 / self.SNR + vv for vv in chan_mag_z]
+                    self.eq_gain_q = np.divide(np.conj(chan_est_dat), eq_gain_z)
 
-                chan_mag_z = np.matmul(np.diag(chan_est_dat), np.conj(chan_est_dat))
-                eq_gain_z = [1.0 / self.SNR + vv for vv in chan_mag_z]
-                self.eq_gain_q = np.divide(np.conj(chan_est_dat), eq_gain_z)
-
-                self.est_data_freq[P][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
+                    self.est_data_freq[P][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
 
         corr_size = int(self.num_ofdm_symb/sum(self.synch_dat))
 
