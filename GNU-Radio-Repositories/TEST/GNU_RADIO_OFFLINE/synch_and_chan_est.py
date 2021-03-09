@@ -36,7 +36,9 @@ class SynchAndChanEst(gr.sync_block):
 
         self.L_synch = len(self.synch_bins_used_P)
         self.synch_dat = synch_dat  # example [1, 1] or [2, 1]
-
+        self.num_data_symbs_blk = self.synch_dat[1]
+        # self.symb_blk_length = sum(self.sync_dat) * self.rx_b_len
+        # self.data_blk_length = self.num_data_symbs * self.rx_b_len
         self.M = [self.synch_dat[0], self.num_synch_bins]
         self.MM = int(np.prod(self.M))
 
@@ -131,6 +133,8 @@ class SynchAndChanEst(gr.sync_block):
         out = output_items[0]
 
         n_trials = int(np.around(len(in0) / self.stride_val))
+        n_unique_symb = int(np.floor(len(in0) / self.rx_b_len))
+        n_data_symb = int(n_unique_symb * (self.synch_dat[1] / sum(self.synch_dat)))
 
         for P in list(range(n_trials)):
             if self.M[0] * self.rx_b_len + P * self.stride_val + self.nfft + self.start_samp < len(in0):
@@ -209,11 +213,11 @@ class SynchAndChanEst(gr.sync_block):
                         self.eq_gain = np.divide(np.conj(chan_est), eq_gain_0)
                         self.eq_gain_ext = np.tile(self.eq_gain, self.M[0])
                         self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
+                        break
+        for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
 
-        for P in list(range(self.corr_obs + 1)):
-
-            if self.time_synch_ref[P][0] + self.M[0] * self.rx_b_len + self.nfft - 1 <= len(in0):
-                data_ptr = int(self.time_synch_ref[P][0] + self.M[0]*self.rx_b_len)
+            if self.time_synch_ref[0][0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
+                data_ptr = int(self.time_synch_ref[0][0] + self.M[0] * self.rx_b_len * (P + 1))
 
                 data_buff_time = in0[data_ptr: data_ptr + self.nfft]
 
