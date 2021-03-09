@@ -36,7 +36,9 @@ class SynchAndChanEst(gr.sync_block):
 
         self.L_synch = len(self.synch_bins_used_P)
         self.synch_dat = synch_dat  # example [1, 1] or [2, 1]
-
+        self.num_data_symbs_blk = self.synch_dat[1]
+        # self.symb_blk_length = sum(self.sync_dat) * self.rx_b_len
+        # self.data_blk_length = self.num_data_symbs * self.rx_b_len
         self.M = [self.synch_dat[0], self.num_synch_bins]
         self.MM = int(np.prod(self.M))
 
@@ -131,6 +133,8 @@ class SynchAndChanEst(gr.sync_block):
         out = output_items[0]
 
         n_trials = int(np.around(len(in0) / self.stride_val))
+        n_unique_symb = int(np.floor(len(in0) / self.rx_b_len))
+        n_data_symb = int(n_unique_symb * (self.synch_dat[1] / sum(self.synch_dat)))
 
         for P in list(range(n_trials)):
             if self.M[0] * self.rx_b_len + P * self.stride_val + self.nfft + self.start_samp < len(in0):
@@ -209,33 +213,33 @@ class SynchAndChanEst(gr.sync_block):
                         self.eq_gain = np.divide(np.conj(chan_est), eq_gain_0)
                         self.eq_gain_ext = np.tile(self.eq_gain, self.M[0])
                         self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
+                        break
+        for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
 
-        for P in list(range(self.corr_obs + 1)):
+            if self.time_synch_ref[0][0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
+                data_ptr = int(self.time_synch_ref[0][0] + self.M[0] * self.rx_b_len * (P + 1))
+                for N in range(self.synch_dat[1]):
+                    data_buff_time = in0[data_ptr + self.rx_b_len * N: data_ptr + self.rx_b_len * N + self.nfft]
 
-            if self.time_synch_ref[P][0] + self.M[0] * self.rx_b_len + self.nfft - 1 <= len(in0):
-                data_ptr = int(self.time_synch_ref[P][0] + self.M[0]*self.rx_b_len)
+                    t_vec = np.fft.fft(data_buff_time, self.nfft)
 
-                data_buff_time = in0[data_ptr: data_ptr + self.nfft]
+                    freq_data_0 = t_vec[self.bins_used_P]
+                    p_est0 = np.sqrt(len(freq_data_0)/(np.dot(freq_data_0, np.conj(freq_data_0))))
 
-                t_vec = np.fft.fft(data_buff_time, self.nfft)
+                    data_recov_0 = freq_data_0 * p_est0
 
-                freq_data_0 = t_vec[self.bins_used_P]
-                p_est0 = np.sqrt(len(freq_data_0)/(np.dot(freq_data_0, np.conj(freq_data_0))))
+                    arg_val = ([((1j * (2 * np.pi / self.nfft)) *
+                                 self.time_synch_ref[P][1]) * kk for kk in self.bins_used_P])
 
-                data_recov_0 = freq_data_0 * p_est0
+                    data_recov_z = np.matmul(np.diag(data_recov_0), np.exp(arg_val))
 
-                arg_val = ([((1j * (2 * np.pi / self.nfft)) *
-                             self.time_synch_ref[P][1]) * kk for kk in self.bins_used_P])
+                    chan_est_dat = self.est_chan_freq_P[0][self.bins_used_P]
 
-                data_recov_z = np.matmul(np.diag(data_recov_0), np.exp(arg_val))
+                    chan_mag_z = np.matmul(np.diag(chan_est_dat), np.conj(chan_est_dat))
+                    eq_gain_z = [1.0 / self.SNR + vv for vv in chan_mag_z]
+                    self.eq_gain_q = np.divide(np.conj(chan_est_dat), eq_gain_z)
 
-                chan_est_dat = self.est_chan_freq_P[P][self.bins_used_P]
-
-                chan_mag_z = np.matmul(np.diag(chan_est_dat), np.conj(chan_est_dat))
-                eq_gain_z = [1.0 / self.SNR + vv for vv in chan_mag_z]
-                self.eq_gain_q = np.divide(np.conj(chan_est_dat), eq_gain_z)
-
-                self.est_data_freq[P][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
+                    self.est_data_freq[P][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
 
         corr_size = int(self.num_ofdm_symb/sum(self.synch_dat))
 
