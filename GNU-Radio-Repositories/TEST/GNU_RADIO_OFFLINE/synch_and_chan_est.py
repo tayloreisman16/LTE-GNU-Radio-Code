@@ -15,13 +15,14 @@ from gnuradio import gr
 
 class SynchAndChanEst(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
-                 num_synch_bins, synch_dat, num_data_bins, snr, scale_factor_gate, directory_name,
+                 num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name,
                  file_name_cest, diagnostics, genie):
         self.num_ofdm_symb = num_ofdm_symb
         self.nfft = nfft
         self.cp_len = cp_len
         self.genie = genie
         self.scale_factor_gate = scale_factor_gate
+        self.channel = channel
 
         self.channel_band = 960e3 * 0.97
         self.fs = self.channel_band
@@ -119,7 +120,10 @@ class SynchAndChanEst(gr.sync_block):
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
         if self.num_ant_txrx == 1:
-            h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+            if self.channel == 'ideal':
+                h[0, 0] = np.array([1])
+            else:
+                h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
                 channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
@@ -214,7 +218,6 @@ class SynchAndChanEst(gr.sync_block):
                         self.eq_gain_ext = np.tile(self.eq_gain, self.M[0])
                         self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
                         break
-        ind = 0
 
         for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
             data_ptr = int(self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1))
@@ -248,7 +251,7 @@ class SynchAndChanEst(gr.sync_block):
         if self.diagnostic == 1:
             plt.plot(self.est_data_freq[0][:].real, self.est_data_freq[0][:].imag, 'o')
             plt.show()
-        data_out = np.reshape(self.est_data_freq[0::sum(self.synch_dat)][:], (1, n_data_symb * np.size(self.est_data_freq[0::sum(self.synch_dat)], 1)))  #TODO: Link Data Demod to Data Out
+        data_out = np.reshape(self.est_data_freq[0::sum(self.synch_dat)][:], (1, n_data_symb * np.size(self.est_data_freq[0::sum(self.synch_dat)], 1)))  # TODO: Link Data Demod to Data Out
 
         if self.count > 0:
             out[0:np.size(data_out, 1)] = data_out[:, np.newaxis]
