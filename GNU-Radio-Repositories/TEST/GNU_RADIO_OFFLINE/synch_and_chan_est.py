@@ -68,18 +68,18 @@ class SynchAndChanEst(gr.sync_block):
         self.del_mat_exp = np.tile(np.exp((1j * (2.0 * np.pi / self.nfft)) * (
             np.outer(list(range(self.cp_len + 1)), list(self.synch_bins_used_P)))), (1, self.M[0]))
 
-        self.stride_val = 16
+        self.stride_val = 1
         self.start_samp = self.cp_len
         self.rx_b_len = self.nfft + self.cp_len
 
         self.max_num_corr = 100
 
-        self.time_synch_ref = np.zeros((self.max_num_corr, 3))
-        self.est_chan_time = np.zeros((self.max_num_corr, self.nfft), dtype=complex)
-        self.est_synch_freq = np.zeros((self.max_num_corr, len(self.zadoff_chu)), dtype=complex)
+        self.time_synch_ref = np.zeros(3)
+        self.est_chan_time = np.zeros((num_ofdm_symb, self.nfft), dtype=complex)
+        self.est_synch_freq = np.zeros((num_ofdm_symb, len(self.zadoff_chu)), dtype=complex)
 
-        self.est_chan_freq_P = np.zeros((self.max_num_corr, self.nfft), dtype=complex)
-        self.est_data_freq = np.zeros((self.max_num_corr, self.num_data_bins), dtype=complex)
+        self.est_chan_freq_P = np.zeros((num_ofdm_symb, self.nfft), dtype=complex)
+        self.est_data_freq = np.zeros((num_ofdm_symb, self.num_data_bins), dtype=complex)
 
         self.rx_data_time = np.zeros((1, self.M[0] * self.nfft), dtype=complex)  # first dimension = no of antennas
         self.synchdat00 = np.zeros((1, self.M[0] * self.num_synch_bins), dtype=complex)
@@ -160,15 +160,15 @@ class SynchAndChanEst(gr.sync_block):
                 dmax_val = np.max((abs(self.del_mat)))
 
                 if dmax_val > self.scale_factor_gate * len(synchdat[0]):
-                    tim_synch_ind = self.time_synch_ref[max(self.corr_obs, 0)][0]
+                    tim_synch_ind = self.time_synch_ref[0]
                     if ((P * self.stride_val + self.start_samp - tim_synch_ind > 2 * self.cp_len + self.nfft)
                             or self.corr_obs == -1):
 
                         self.corr_obs += 1
 
-                        self.time_synch_ref[self.corr_obs][0] = P * self.stride_val + self.start_samp
-                        self.time_synch_ref[self.corr_obs][1] = dmax_ind
-                        self.time_synch_ref[self.corr_obs][2] = int(dmax_val)
+                        self.time_synch_ref[0] = P * self.stride_val + self.start_samp
+                        self.time_synch_ref[1] = dmax_ind
+                        self.time_synch_ref[2] = int(dmax_val)
 
                         del_vec = self.del_mat_exp[dmax_ind][:]
                         data_recov = np.matmul(np.diag(del_vec), synchdat[0])
@@ -214,12 +214,16 @@ class SynchAndChanEst(gr.sync_block):
                         self.eq_gain_ext = np.tile(self.eq_gain, self.M[0])
                         self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
                         break
-        for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
+        ind = 0
 
-            if self.time_synch_ref[0][0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
-                data_ptr = int(self.time_synch_ref[0][0] + self.M[0] * self.rx_b_len * (P + 1))
+        for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
+            data_ptr = int(self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1))
+            if self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
+
                 for N in range(self.synch_dat[1]):
-                    data_buff_time = in0[data_ptr + self.rx_b_len * N: data_ptr + self.rx_b_len * N + self.nfft]
+                    start = data_ptr + self.rx_b_len * N
+                    end = data_ptr + self.rx_b_len * N + self.nfft
+                    data_buff_time = in0[start: end]
 
                     t_vec = np.fft.fft(data_buff_time, self.nfft)
 
@@ -229,7 +233,7 @@ class SynchAndChanEst(gr.sync_block):
                     data_recov_0 = freq_data_0 * p_est0
 
                     arg_val = ([((1j * (2 * np.pi / self.nfft)) *
-                                 self.time_synch_ref[P][1]) * kk for kk in self.bins_used_P])
+                                 self.time_synch_ref[1]) * kk for kk in self.bins_used_P])
 
                     data_recov_z = np.matmul(np.diag(data_recov_0), np.exp(arg_val))
 
@@ -239,14 +243,16 @@ class SynchAndChanEst(gr.sync_block):
                     eq_gain_z = [1.0 / self.SNR + vv for vv in chan_mag_z]
                     self.eq_gain_q = np.divide(np.conj(chan_est_dat), eq_gain_z)
 
-                    self.est_data_freq[P][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
-
-        corr_size = int(self.num_ofdm_symb/sum(self.synch_dat))
-
-        data_out = np.reshape(self.est_data_freq[0:corr_size][:], (1, corr_size * np.size(self.est_data_freq, 1)))
+                    self.est_data_freq[P + N][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
+        data_demod = np.delete(self.est_data_freq, list(range(3, self.est_data_freq.shape[0], sum(self.synch_dat))), axis=0)
+        if self.diagnostic == 1:
+            plt.plot(self.est_data_freq[0][:].real, self.est_data_freq[0][:].imag, 'o')
+            plt.show()
+        data_out = np.reshape(self.est_data_freq[0::sum(self.synch_dat)][:], (1, n_data_symb * np.size(self.est_data_freq[0::sum(self.synch_dat)], 1)))  #TODO: Link Data Demod to Data Out
 
         if self.count > 0:
             out[0:np.size(data_out, 1)] = data_out[:, np.newaxis]
+
         self.count += 1
         self.corr_obs = 0
         return len(output_items[0])
