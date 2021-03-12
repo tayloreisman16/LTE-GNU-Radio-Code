@@ -10,6 +10,7 @@ cp_len = 16
 num_synch_bins = nfft - 2
 num_data_bins = 60
 synch_dat = [1, 3]
+channel = 'normal'
 snr = 100
 scale_factor_gate = 0.60
 diagnostics = 1
@@ -34,6 +35,6 @@ plt.show()
 out_buffer = np.zeros((1, len(tx_data[0][:])), dtype=complex)
 
 block = SynchAndChanEst(num_ofdm_symb, nfft, cp_len,
-                        num_synch_bins, synch_dat, num_data_bins, snr, scale_factor_gate, directory_name, file_name_cest, diagnostics,
+                        num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name, file_name_cest, diagnostics,
                         genie)
 output_buffer = block.work(tx_data, out_buffer)
