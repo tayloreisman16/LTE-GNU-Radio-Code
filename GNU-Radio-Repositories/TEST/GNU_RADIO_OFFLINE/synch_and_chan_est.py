@@ -115,11 +115,15 @@ class SynchAndChanEst(gr.sync_block):
                                out_sig=[np.complex64])
 
     def give_genie_chan(self):
+        test_case = 1
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
         if self.num_ant_txrx == 1:
-            h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+            if test_case == 0:
+                h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+            elif test_case == 1:
+                h[0, 0] = np.array([1])
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
                 channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
@@ -248,7 +252,7 @@ class SynchAndChanEst(gr.sync_block):
         if self.diagnostic == 1:
             plt.plot(self.est_data_freq[0][:].real, self.est_data_freq[0][:].imag, 'o')
             plt.show()
-        data_out = np.reshape(self.est_data_freq[0::sum(self.synch_dat)][:], (1, n_data_symb * np.size(self.est_data_freq[0::sum(self.synch_dat)], 1)))  #TODO: Link Data Demod to Data Out
+        data_out = np.reshape(data_demod[:][:], (1, n_data_symb * np.size(data_demod, 1)))
 
         if self.count > 0:
             out[0:np.size(data_out, 1)] = data_out[:, np.newaxis]
