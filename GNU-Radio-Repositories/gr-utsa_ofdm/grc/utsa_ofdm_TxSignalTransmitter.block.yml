@@ -1,0 +1,24 @@
+id: utsa_ofdm_TxSignalTransmitter
+label: TxSignalTransmitter
+category: '[utsa_ofdm]'
+
+templates:
+  imports: import utsa_ofdm
+  make: utsa_ofdm.TxSignalTransmitter(${pickle_directory}, ${pickle_file})
+
+parameters:
+-   id: case
+    label: Case
+    dtype: int
+-   id: pickle_directory
+    label: Pickle Directory
+    dtype: string
+-   id: pickle_file
+    label: Pickle File
+    dtype: string
+
+outputs:
+-   domain: stream
+    dtype: complex
+
+file_format: 1

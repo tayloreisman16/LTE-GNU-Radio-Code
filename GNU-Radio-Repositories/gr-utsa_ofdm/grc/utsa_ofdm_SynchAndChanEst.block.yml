@@ -1,0 +1,53 @@
+id: utsa_ofdm_SynchAndChanEst
+label: SynchAndChanEst
+category: '[utsa_ofdm]'
+
+templates:
+  imports: import utsa_ofdm
+  make: utsa_ofdm.SynchAndChanEst(${num_ofdm_symb}, ${nfft}, ${cp_len}, ${num_synch_bins}, ${synch_dat}, ${num_data_bins}, ${snr}, ${scale_factor_gate}, ${directory_name}, ${file_name_cest}, ${diagnostics}, ${genie})
+
+parameters:
+-   id: num_ofdm_symb
+    label: Numb. of OFDM symbs.
+    dtype: int
+-   id: nfft
+    label: NFFT
+    dtype: int
+-   id: cp_len
+    label: CP Size
+    dtype: int
+-   id: num_synch_bins
+    label: Numb. of Synch. Bins
+    dtype: int
+-   id: synch_dat
+    label: Synch.-Data Pattern
+    dtype: raw
+-   id: num_data_bins
+    label: Numb. of Data Bins
+    dtype: int
+-   id: snr
+    label: SNR
+    dtype: int
+-   id: scale_factor_gate
+    label: Correlation Gate Value
+    dtype: float
+-   id: directory_name
+    label: Pickle Directory Name
+    dtype: string
+-   id: file_name_cest
+    label: Pickle Output Directory
+    dtype: string
+-   id: diagnostics
+    label: Diagnostics (Offline-Only)
+    dtype: bool
+-   id: genie
+    label: Genie (Offline-Only)
+    dtype: bool
+
+inputs:
+-   domain: stream
+    dtype: complex
+
+outputs:
+-   domain: stream
+    dtype: complex

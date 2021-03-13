@@ -5,6 +5,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
+
+
 import numpy as np
 import pickle
 from gnuradio import gr
@@ -12,7 +14,7 @@ from gnuradio import gr
 
 class TxSignalTransmitter(gr.sync_block):
 
-    def __init__(self, case, pickle_directory, pickle_file):
+    def __init__(self, pickle_directory, pickle_file):
         gr.sync_block.__init__(self,
                                name="SimpleTx",
                                in_sig=None,
@@ -25,3 +27,4 @@ class TxSignalTransmitter(gr.sync_block):
         out = output_items[0]
         out[0:self.tx_data.shape[1]] = self.tx_data[0, :]
         return len(output_items[0])
+

@@ -6,9 +6,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+
 import numpy as np
 import pickle
-# import datetime
 import matplotlib.pyplot as plt
 from gnuradio import gr
 
@@ -17,6 +17,11 @@ class SynchAndChanEst(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
                  num_synch_bins, synch_dat, num_data_bins, snr, scale_factor_gate, directory_name,
                  file_name_cest, diagnostics, genie):
+        gr.sync_block.__init__(self,
+                               name="SynchAndChanEst",
+                               in_sig=[np.complex64],
+                               out_sig=[np.complex64])
+
         self.num_ofdm_symb = num_ofdm_symb
         self.nfft = nfft
         self.cp_len = cp_len
@@ -26,7 +31,7 @@ class SynchAndChanEst(gr.sync_block):
         self.channel_band = 960e3 * 0.97
         self.fs = self.channel_band
         self.bin_spacing = 15e3
-        
+
         self.num_synch_bins = num_synch_bins
 
         self.synch_bins_used_N = (list(range(-int(self.num_synch_bins / 2), 0, 1)) +
@@ -48,7 +53,7 @@ class SynchAndChanEst(gr.sync_block):
         x0 = np.array(range(0, int(self.MM)))
         x1 = np.array(range(1, int(self.MM) + 1))
         if self.MM % 2 == 0:
-            self.zadoff_chu = np.exp(-1j * (2 * np.pi / self.MM) * self.p * (x0**2 / 2))
+            self.zadoff_chu = np.exp(-1j * (2 * np.pi / self.MM) * self.p * (x0 ** 2 / 2))
         else:
             self.zadoff_chu = np.exp(-1j * (2 * np.pi / self.MM) * self.p * (x0 * x1) / 2)
 
@@ -96,23 +101,18 @@ class SynchAndChanEst(gr.sync_block):
         self.diagnostic = diagnostics
         self.directory_name = directory_name
         self.file_name_cest = file_name_cest
-        
+
         self.num_ant_txrx = 1  # Hard Coded
-        
+
         # Genie Channel Variables
         if self.genie == 1:
             self.max_impulse = self.nfft
             self.genie_chan_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
-            
+
             num_bins0 = np.floor(self.channel_band / self.bin_spacing)
             num_bins1 = 4 * np.floor(num_bins0 / 4)
             all_bins = np.array(list(range(-int(num_bins1 / 2), 0)) + list(range(1, int(num_bins1 / 2) + 1)))
             self.used_bins = (self.nfft + all_bins)
-
-        gr.sync_block.__init__(self,
-                               name="SynchAndChanEst",
-                               in_sig=[np.complex64],
-                               out_sig=[np.complex64])
 
     def give_genie_chan(self):
         test_case = 1
@@ -259,3 +259,5 @@ class SynchAndChanEst(gr.sync_block):
         self.count += 1
         self.corr_obs = 0
         return len(output_items[0])
+
+
