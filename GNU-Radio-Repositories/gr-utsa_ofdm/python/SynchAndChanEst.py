@@ -16,7 +16,7 @@ from gnuradio import gr
 class SynchAndChanEst(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
                  num_synch_bins, synch_dat, num_data_bins, snr, scale_factor_gate, directory_name,
-                 file_name_cest, diagnostics, genie):
+                 file_name_cest, diagnostics, genie, channel):
         gr.sync_block.__init__(self,
                                name="SynchAndChanEst",
                                in_sig=[np.complex64],
@@ -24,6 +24,7 @@ class SynchAndChanEst(gr.sync_block):
 
         self.num_ofdm_symb = num_ofdm_symb
         self.nfft = nfft
+        self.channel = channel
         self.cp_len = cp_len
         self.genie = genie
         self.scale_factor_gate = scale_factor_gate
@@ -115,15 +116,14 @@ class SynchAndChanEst(gr.sync_block):
             self.used_bins = (self.nfft + all_bins)
 
     def give_genie_chan(self):
-        test_case = 1
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
         if self.num_ant_txrx == 1:
-            if test_case == 0:
-                h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
-            elif test_case == 1:
+            if self.channel == 'Ideal':
                 h[0, 0] = np.array([1])
+            else:
+                h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
                 channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
@@ -202,7 +202,6 @@ class SynchAndChanEst(gr.sync_block):
                         chan_est_tim = np.fft.ifft(chan_est1, self.nfft)
 
                         if self.diagnostic == 1:
-
                             # date_time = datetime.datetime.now().strftime('%Y_%m_%d_%Hh_%Mm')
 
                             f = open(str(
@@ -231,7 +230,7 @@ class SynchAndChanEst(gr.sync_block):
                     t_vec = np.fft.fft(data_buff_time, self.nfft)
 
                     freq_data_0 = t_vec[self.bins_used_P]
-                    p_est0 = np.sqrt(len(freq_data_0)/(np.dot(freq_data_0, np.conj(freq_data_0))))
+                    p_est0 = np.sqrt(len(freq_data_0) / (np.dot(freq_data_0, np.conj(freq_data_0))))
 
                     data_recov_0 = freq_data_0 * p_est0
 
@@ -243,14 +242,16 @@ class SynchAndChanEst(gr.sync_block):
                     chan_est_dat = self.est_chan_freq_P[0][self.bins_used_P]
 
                     chan_mag_z = np.matmul(np.diag(chan_est_dat), np.conj(chan_est_dat))
-                    eq_gain_z = [1.0 / self.SNR + vv for vv in chan_mag_z]
+                    eq_gain_z = [1.0 / self.SNR_lin + vv for vv in chan_mag_z]
                     self.eq_gain_q = np.divide(np.conj(chan_est_dat), eq_gain_z)
 
                     self.est_data_freq[P + N][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
-        data_demod = np.delete(self.est_data_freq, list(range(3, self.est_data_freq.shape[0], sum(self.synch_dat))), axis=0)
+        data_demod = np.delete(self.est_data_freq, list(range(3, self.est_data_freq.shape[0], sum(self.synch_dat))),
+                               axis=0)
         if self.diagnostic == 1:
             plt.plot(self.est_data_freq[0][:].real, self.est_data_freq[0][:].imag, 'o')
             plt.show()
+
         data_out = np.reshape(data_demod[:][:], (1, n_data_symb * np.size(data_demod, 1)))
 
         if self.count > 0:
@@ -259,5 +260,3 @@ class SynchAndChanEst(gr.sync_block):
         self.count += 1
         self.corr_obs = 0
         return len(output_items[0])
-
-
