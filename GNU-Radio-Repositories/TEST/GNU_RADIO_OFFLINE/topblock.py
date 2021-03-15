@@ -10,14 +10,14 @@ cp_len = 16
 num_synch_bins = nfft - 2
 num_data_bins = 60
 synch_dat = [1, 3]
-channel = 'normal'
+channel = 'Ideal'
 snr = 100
 scale_factor_gate = 0.60
 diagnostics = 1
 genie = 1
 
 pickle_directory = '/srv/LTE-Code-Offline/Data/'
-pickle_file = 'tx_data_offline.pckl'
+pickle_file = 'tx_data_offline' + '_chan_type_' + channel + '_SNR_' + str(snr) + '.pckl'
 directory_name = '/srv/LTE-GNU-Radio-Code/GNU-Radio-Repositories/TEST/GNU_RADIO_OFFLINE/Output/'
 file_name_cest = 'output_data.pckl'
 
