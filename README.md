@@ -12,4 +12,5 @@ The commands for CMake are as follows:
 4. sudo make install
 5. sudo ldconfig
 6. gnuradio-companion
+
 After running these commands, all the blocks in that particular OOT module should populate in the GRC diagram.
