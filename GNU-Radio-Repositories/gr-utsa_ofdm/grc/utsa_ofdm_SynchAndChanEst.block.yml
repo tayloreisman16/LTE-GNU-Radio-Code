@@ -1,10 +1,10 @@
 id: utsa_ofdm_SynchAndChanEst
-label: SynchAndChanEst
+label: Synch. and Channel Estimation
 category: '[utsa_ofdm]'
 
 templates:
   imports: import utsa_ofdm
-  make: utsa_ofdm.SynchAndChanEst(${num_ofdm_symb}, ${nfft}, ${cp_len}, ${num_synch_bins}, ${synch_dat}, ${num_data_bins}, ${snr}, ${scale_factor_gate}, ${directory_name}, ${file_name_cest}, ${diagnostics}, ${genie})
+  make: utsa_ofdm.SynchAndChanEst(${num_ofdm_symb}, ${nfft}, ${cp_len}, ${num_synch_bins}, ${synch_dat}, ${num_data_bins}, ${snr}, ${channel}, ${scale_factor_gate}, ${directory_name}, ${file_name_cest}, ${diagnostics}, ${genie})
 
 parameters:
 -   id: num_ofdm_symb
@@ -28,6 +28,9 @@ parameters:
 -   id: snr
     label: SNR
     dtype: int
+-   id: channel
+    label: Channel ('Fading' or 'AWGN') !GENIE ONLY!
+    dtype: string
 -   id: scale_factor_gate
     label: Correlation Gate Value
     dtype: float
@@ -51,3 +54,5 @@ inputs:
 outputs:
 -   domain: stream
     dtype: complex
+
+file_format: 1

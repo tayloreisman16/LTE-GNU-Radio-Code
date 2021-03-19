@@ -30,8 +30,7 @@ from PyQt5 import Qt
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-import RXOFDM
-import TXOFDM
+import utsa_ofdm
 
 
 
@@ -78,17 +77,15 @@ class ofdm_chain(gr.top_block, Qt.QWidget):
         ##################################################
         # Blocks
         ##################################################
+        self.utsa_ofdm_TxSignalTransmitter_0 = utsa_ofdm.TxSignalTransmitter('/srv/LTE-Code-Offline/Data/', 'tx_data_online_chan_type_Fading_SNR_100.pckl')
         self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_gr_complex*1)
-        self.TXOFDM_tx_signal_transmitter_0 = TXOFDM.tx_signal_transmitter(0, '/srv/LTE-Code-Offline/Data/', 'tx_data_offline.pckl')
-        self.RXOFDM_synch_and_chan_est_0 = RXOFDM.synch_and_chan_est(24, 64, 16, 64, [1, 3], 60, 50, '/srv/LTE-GNU-Radio-Code/DATA/\n', 'output_file', 1, 1)
 
 
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.RXOFDM_synch_and_chan_est_0, 0), (self.blocks_null_sink_0, 0))
-        self.connect((self.TXOFDM_tx_signal_transmitter_0, 0), (self.RXOFDM_synch_and_chan_est_0, 0))
+        self.connect((self.utsa_ofdm_TxSignalTransmitter_0, 0), (self.blocks_null_sink_0, 0))
 
 
     def closeEvent(self, event):

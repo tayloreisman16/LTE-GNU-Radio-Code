@@ -15,7 +15,7 @@ from gnuradio import gr
 
 class SynchAndChanEst(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
-                 num_synch_bins, synch_dat, num_data_bins, snr, scale_factor_gate, directory_name,
+                 num_synch_bins, synch_dat, num_data_bins, snr, channel, scale_factor_gate, directory_name,
                  file_name_cest, diagnostics, genie):
         gr.sync_block.__init__(self,
                                name="SynchAndChanEst",
@@ -26,6 +26,7 @@ class SynchAndChanEst(gr.sync_block):
         self.nfft = nfft
         self.cp_len = cp_len
         self.genie = genie
+        self.channel = channel
         self.scale_factor_gate = scale_factor_gate
 
         self.channel_band = 960e3 * 0.97
@@ -120,9 +121,9 @@ class SynchAndChanEst(gr.sync_block):
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
         if self.num_ant_txrx == 1:
-            if test_case == 0:
+            if self.channel == 'Fading':
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
-            elif test_case == 1:
+            elif self.channel == 'AWGN':
                 h[0, 0] = np.array([1])
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):

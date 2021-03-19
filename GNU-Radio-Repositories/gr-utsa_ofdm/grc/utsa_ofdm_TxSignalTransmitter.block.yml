@@ -1,5 +1,5 @@
 id: utsa_ofdm_TxSignalTransmitter
-label: TxSignalTransmitter
+label: OFDM Transmitter
 category: '[utsa_ofdm]'
 
 templates:
