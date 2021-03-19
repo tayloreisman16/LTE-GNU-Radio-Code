@@ -46,6 +46,9 @@ parameters:
 -   id: genie
     label: Genie (Offline-Only)
     dtype: bool
+-   id: channel
+    label: Type of Channel (Genie Only)
+    dtype: string
 
 inputs:
 -   domain: stream

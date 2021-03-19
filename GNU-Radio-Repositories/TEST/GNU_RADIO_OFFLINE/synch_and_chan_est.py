@@ -120,7 +120,7 @@ class SynchAndChanEst(gr.sync_block):
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
         if self.num_ant_txrx == 1:
-            if self.channel == 'ideal':
+            if self.channel == 'Ideal':
                 h[0, 0] = np.array([1])
             else:
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
@@ -244,7 +244,7 @@ class SynchAndChanEst(gr.sync_block):
                     chan_est_dat = self.est_chan_freq_P[0][self.bins_used_P]
 
                     chan_mag_z = np.matmul(np.diag(chan_est_dat), np.conj(chan_est_dat))
-                    eq_gain_z = [1.0 / self.SNR + vv for vv in chan_mag_z]
+                    eq_gain_z = [1.0 / self.SNR_lin + vv for vv in chan_mag_z]
                     self.eq_gain_q = np.divide(np.conj(chan_est_dat), eq_gain_z)
 
                     self.est_data_freq[P + N][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
