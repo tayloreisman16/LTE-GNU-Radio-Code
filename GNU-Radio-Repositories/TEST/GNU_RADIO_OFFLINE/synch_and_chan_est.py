@@ -16,11 +16,13 @@ from gnuradio import gr
 class SynchAndChanEst(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
                  num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name,
-                 file_name_cest, diagnostics, genie):
+                 file_name_cest, plot_iq, channel_graph_plot, perfect_chan_est, save_channel_file):
         self.num_ofdm_symb = num_ofdm_symb
         self.nfft = nfft
         self.cp_len = cp_len
-        self.genie = genie
+        self.channel_graph_plot = channel_graph_plot
+        self.perfect_chan_est = perfect_chan_est
+        self.save_channel_file = save_channel_file
         self.scale_factor_gate = scale_factor_gate
         self.channel = channel
 
@@ -94,14 +96,14 @@ class SynchAndChanEst(gr.sync_block):
         self.SNR_lin = 10 ** (self.SNR / 20)
         self.count = 0
 
-        self.diagnostic = diagnostics
+        self.plot_iq = plot_iq
         self.directory_name = directory_name
         self.file_name_cest = file_name_cest
         
         self.num_ant_txrx = 1  # Hard Coded
         
         # Genie Channel Variables
-        if self.genie == 1:
+        if self.channel_graph_plot == 1:
             self.max_impulse = self.nfft
             self.genie_chan_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
             
@@ -119,6 +121,8 @@ class SynchAndChanEst(gr.sync_block):
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
+        channel_freq_00 = np.zeros((self.num_ant_txrx, int(self.nfft - 2)), dtype=complex)
+        genie_chan_freq = np.zeros((self.num_ant_txrx, int(self.nfft - 2)), dtype=complex)
         if self.num_ant_txrx == 1:
             if self.channel == 'Ideal':
                 h[0, 0] = np.array([1])
@@ -129,9 +133,9 @@ class SynchAndChanEst(gr.sync_block):
             for tx in range(self.num_ant_txrx):
                 channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
                 channel_freq[rx, tx, :] = np.fft.fft(channel_time[rx, tx, 0:len(h[rx, tx])], self.nfft)
-
         genie_chan_time = channel_time
-        return genie_chan_time
+        genie_chan_freq[0][:] = channel_freq[0][0][self.synch_bins_used_P]
+        return genie_chan_time, genie_chan_freq
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
@@ -182,14 +186,18 @@ class SynchAndChanEst(gr.sync_block):
                         tmp_v1 = np.divide(np.matmul(np.diag(data_recov), np.conj(self.zadoff_chu)), zcwn)
 
                         chan_est00 = np.reshape(tmp_v1, (self.M[0], self.L_synch))
+                        chan_q, freq_q = self.give_genie_chan()
+                        if self.perfect_chan_est == 1:
+                            chan_est00 = freq_q
+
                         chan_est = np.sum(chan_est00, axis=0) / float(self.M[0])
 
                         chan_est1 = np.zeros((1, self.nfft), dtype=np.complex)
                         chan_est1[0][self.synch_bins_used_P] = chan_est
+
                         self.est_chan_freq_P[self.corr_obs][:] = chan_est1[0][:]
 
-                        if self.diagnostic == 1 and self.count == 0 and self.genie == 1:
-                            chan_q = self.give_genie_chan()
+                        if self.count == 0 and self.channel_graph_plot == 1:
                             xax = np.array(range(0, self.nfft - 2))
                             yax1 = 20 * np.log10(abs(chan_est1))
                             yax2 = 20 * np.log10(abs(np.fft.fft(chan_q, self.nfft)))
@@ -202,7 +210,7 @@ class SynchAndChanEst(gr.sync_block):
 
                         chan_est_tim = np.fft.ifft(chan_est1, self.nfft)
 
-                        if self.diagnostic == 1:
+                        if self.save_channel_file == 1:
 
                             # date_time = datetime.datetime.now().strftime('%Y_%m_%d_%Hh_%Mm')
 
@@ -249,7 +257,7 @@ class SynchAndChanEst(gr.sync_block):
 
                     self.est_data_freq[P + N][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
         data_demod = np.delete(self.est_data_freq, list(range(3, self.est_data_freq.shape[0], sum(self.synch_dat))), axis=0)
-        if self.diagnostic == 1:
+        if self.plot_iq == 1:
             plt.plot(self.est_data_freq[0][:].real, self.est_data_freq[0][:].imag, 'o')
             plt.show()
 
