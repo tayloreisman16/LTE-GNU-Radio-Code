@@ -121,13 +121,27 @@ class SynchAndChanEst(gr.sync_block):
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)
         channel_time = np.zeros((self.num_ant_txrx, self.num_ant_txrx, self.max_impulse), dtype=complex)
         channel_freq = np.zeros((self.num_ant_txrx, self.num_ant_txrx, int(self.nfft)), dtype=complex)
-        channel_freq_00 = np.zeros((self.num_ant_txrx, int(self.nfft - 2)), dtype=complex)
         genie_chan_freq = np.zeros((self.num_ant_txrx, int(self.nfft - 2)), dtype=complex)
         if self.num_ant_txrx == 1:
             if self.channel == 'Ideal':
                 h[0, 0] = np.array([1])
-            else:
+            elif self.channel == 'Fading':
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+            else:
+                print('# Please select either Ideal or Fading for channel type.')
+        elif self.num_ant_txrx == 2:
+            if self.channel == 'Ideal':
+                h[0, 0] = np.array([1])
+                h[0, 1] = np.array([1])
+                h[1, 0] = np.array([1])
+                h[1, 1] = np.array([1])
+            elif self.channel == 'Fading':
+                h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+                h[0, 1] = np.array([0.8423j, 0.5391, 0, 0, 0])
+                h[1, 0] = np.array([0.1631, -0.0815 + 0.9784j, 0.0978, 0, 0])
+                h[1, 1] = np.array([0.0572j, 0.3659j, 0.5717 - 0.5717j, 0.4574, 0])
+            else:
+                print('# Please select either Ideal or Fading for channel type.')
 
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
@@ -195,7 +209,7 @@ class SynchAndChanEst(gr.sync_block):
                         chan_est1 = np.zeros((1, self.nfft), dtype=np.complex)
                         chan_est1[0][self.synch_bins_used_P] = chan_est
 
-                        self.est_chan_freq_P[self.corr_obs][:] = chan_est1[0][:]
+                        self.est_chan_freq_P[0][:] = chan_est1[0][:]
 
                         if self.count == 0 and self.channel_graph_plot == 1:
                             xax = np.array(range(0, self.nfft - 2))
@@ -228,13 +242,14 @@ class SynchAndChanEst(gr.sync_block):
                         self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
                         break
 
+        debug_ptr_offset = -1  # Change this to move the ptr around the buffer, set to 0 to use calculated offset.
         for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
             data_ptr = int(self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1))
             if self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
 
                 for N in range(self.synch_dat[1]):
-                    start = data_ptr + self.rx_b_len * N
-                    end = data_ptr + self.rx_b_len * N + self.nfft
+                    start = data_ptr + self.rx_b_len * N + debug_ptr_offset
+                    end = data_ptr + self.rx_b_len * N + self.nfft + debug_ptr_offset
                     data_buff_time = in0[start: end]
 
                     t_vec = np.fft.fft(data_buff_time, self.nfft)
@@ -258,7 +273,7 @@ class SynchAndChanEst(gr.sync_block):
                     self.est_data_freq[P + N][:] = np.matmul(np.diag(self.eq_gain_q), data_recov_z)
         data_demod = np.delete(self.est_data_freq, list(range(3, self.est_data_freq.shape[0], sum(self.synch_dat))), axis=0)
         if self.plot_iq == 1:
-            plt.plot(self.est_data_freq[0][:].real, self.est_data_freq[0][:].imag, 'o')
+            plt.plot(self.est_data_freq[:][:].real, self.est_data_freq[:][:].imag, 'o')
             plt.show()
 
         data_out = np.reshape(data_demod[:][:], (1, n_data_symb * np.size(data_demod, 1)))
