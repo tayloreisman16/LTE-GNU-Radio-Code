@@ -72,7 +72,8 @@ class SynchAndChanEst(gr.sync_block):
             np.outer(list(range(self.cp_len + 1)), list(self.synch_bins_used_P)))), (1, self.M[0]))
 
         self.stride_val = 1
-        self.start_samp = self.cp_len
+        # self.start_samp = self.cp_len
+        self.start_samp = 0
         self.rx_b_len = self.nfft + self.cp_len
 
         self.max_num_corr = 100
@@ -125,6 +126,10 @@ class SynchAndChanEst(gr.sync_block):
         if self.num_ant_txrx == 1:
             if self.channel == 'Ideal':
                 h[0, 0] = np.array([1])
+            elif self.channel == 'IMT1':
+                h[0, 0] = np.array([0, 1])
+            elif self.channel == 'IMT16':
+                h[0, 0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
             elif self.channel == 'Fading':
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
             else:
@@ -135,6 +140,11 @@ class SynchAndChanEst(gr.sync_block):
                 h[0, 1] = np.array([1])
                 h[1, 0] = np.array([1])
                 h[1, 1] = np.array([1])
+            elif self.channel == 'IMT1':
+                h[0, 0] = np.array([0, 1])
+                h[0, 1] = np.array([0, 1])
+                h[1, 0] = np.array([0, 1])
+                h[1, 1] = np.array([0, 1])
             elif self.channel == 'Fading':
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
                 h[0, 1] = np.array([0.8423j, 0.5391, 0, 0, 0])
@@ -242,7 +252,7 @@ class SynchAndChanEst(gr.sync_block):
                         self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
                         break
 
-        debug_ptr_offset = -1  # Change this to move the ptr around the buffer, set to 0 to use calculated offset.
+        debug_ptr_offset = -1 # Change this to move the ptr around the buffer, set to 0 to use calculated offset.
         for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
             data_ptr = int(self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1))
             if self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
