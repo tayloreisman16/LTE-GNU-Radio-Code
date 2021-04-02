@@ -122,9 +122,32 @@ class SynchAndChanEst(gr.sync_block):
         if self.num_ant_txrx == 1:
             if self.channel == 'Ideal':
                 h[0, 0] = np.array([1])
-            else:
+            elif self.channel == 'IMT1':
+                h[0, 0] = np.array([0, 1])
+            elif self.channel == 'IMT16':
+                h[0, 0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+            elif self.channel == 'Fading':
                 h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
-
+            else:
+                print('# Please select either Ideal or Fading for channel type.')
+        elif self.num_ant_txrx == 2:
+            if self.channel == 'Ideal':
+                h[0, 0] = np.array([1])
+                h[0, 1] = np.array([1])
+                h[1, 0] = np.array([1])
+                h[1, 1] = np.array([1])
+            elif self.channel == 'IMT1':
+                h[0, 0] = np.array([0, 1])
+                h[0, 1] = np.array([0, 1])
+                h[1, 0] = np.array([0, 1])
+                h[1, 1] = np.array([0, 1])
+            elif self.channel == 'Fading':
+                h[0, 0] = np.array([0.3977, 0.7954 - 0.3977j, -0.1988, 0.0994, -0.0398])
+                h[0, 1] = np.array([0.8423j, 0.5391, 0, 0, 0])
+                h[1, 0] = np.array([0.1631, -0.0815 + 0.9784j, 0.0978, 0, 0])
+                h[1, 1] = np.array([0.0572j, 0.3659j, 0.5717 - 0.5717j, 0.4574, 0])
+            else:
+                print('# Please select either Ideal or Fading for channel type.')
         for rx in range(self.num_ant_txrx):
             for tx in range(self.num_ant_txrx):
                 channel_time[rx, tx, 0:len(h[rx, tx])] = h[rx, tx] / np.linalg.norm(h[rx, tx])
