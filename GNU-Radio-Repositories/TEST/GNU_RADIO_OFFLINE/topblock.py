@@ -9,12 +9,14 @@ nfft = 64
 cp_len = 16
 num_synch_bins = nfft - 2
 num_data_bins = 60
-synch_dat = [1, 3]
-channel = 'IMT16'
+synch_data = [1, 3]
+channel = 'IMT1'
 snr = 100
-scale_factor_gate = 0.60
-diagnostics = 1
-genie = 1
+scale_factor_gate = 0.7
+plot_iq = 1
+true_channel_graphing = 1
+perfect_channel_estimation = 1
+save_channel_file = 0
 
 pickle_directory = '/srv/LTE-Code-Offline/Data/'
 pickle_file = 'tx_data_offline' + '_chan_type_' + channel + '_SNR_' + str(snr) + '.pckl'
@@ -35,6 +37,6 @@ plt.show()
 out_buffer = np.zeros((1, len(tx_data[0][:])), dtype=complex)
 
 block = SynchAndChanEst(num_ofdm_symb, nfft, cp_len,
-                        num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name, file_name_cest, diagnostics,
-                        genie)
+                        num_synch_bins, synch_data, num_data_bins, channel, snr, scale_factor_gate, directory_name,
+                        file_name_cest, plot_iq, true_channel_graphing, perfect_channel_estimation, save_channel_file)
 output_buffer = block.work(tx_data, out_buffer)
