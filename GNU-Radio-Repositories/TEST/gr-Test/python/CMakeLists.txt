@@ -22,7 +22,8 @@ add_subdirectory(bindings)
 GR_PYTHON_INSTALL(
     FILES
     __init__.py
-    testtest.py DESTINATION ${GR_PYTHON_DIR}/Test
+    testtest.py
+    DESTINATION ${GR_PYTHON_DIR}/Test
 )
 
 ########################################################################

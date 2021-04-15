@@ -3,7 +3,7 @@ from numpy import zeros, ones, array, tile, reshape, size, newaxis,   \
     floor, around,   \
     conj, matmul, diag, outer,   \
     argmax, max,   \
-    complex64,   \
+    complex64, int16,   \
     pi
 from numpy.fft import fft, ifft
 from numpy.linalg import norm
@@ -114,11 +114,12 @@ class SynchAndChanEst(gr.sync_block):
         gr.sync_block.__init__(self,
                                name="SynchAndChanEst",
                                in_sig=[complex64],
-                               out_sig=[complex64])
+                               out_sig=[complex64, int16])
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
-        out = output_items[0]
+        out0 = output_items[0]
+        out1 = output_items[1]
 
         n_trials = int(around(len(in0) / self.stride_val))
         n_unique_symb = int(floor(len(in0) / self.rx_b_len))
@@ -200,7 +201,9 @@ class SynchAndChanEst(gr.sync_block):
                         self.est_synch_freq[self.corr_obs][:] = matmul(diag(self.eq_gain_ext), data_recov)
                         break
         if self.count > 0:
-            out[0:size(self.time_synch_ref, 1)] = self.time_synch_ref[:, newaxis]
+            out0[:] = in0
+            out1[0:size(self.time_synch_ref, 1)] = self.time_synch_ref[:, newaxis]
+
         self.count += 1
         return len(output_items[0])
 

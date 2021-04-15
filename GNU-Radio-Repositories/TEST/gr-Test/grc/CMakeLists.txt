@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-
 install(FILES
-    Test_testtest.block.yml DESTINATION share/gnuradio/grc/blocks
+    Test_testtest.block.yml
+    DESTINATION share/gnuradio/grc/blocks
 )
