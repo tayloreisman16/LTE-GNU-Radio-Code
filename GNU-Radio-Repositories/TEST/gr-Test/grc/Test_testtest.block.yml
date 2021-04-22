@@ -28,14 +28,14 @@ templates:
 #      * vlen (optional - data stream vector length. Default is 1)
 #      * optional (optional - set to 1 for optional inputs. Default is 0)
 inputs:
-- label: Call Central
+- label: Input 0
   domain: stream
   dtype: complex
   vlen: 1
-  optional:
+  optional: 0
 
 outputs:
-- label: Do Not Call
+- label: Output 0
   domain: stream
   dtype: complex
   vlen: 1

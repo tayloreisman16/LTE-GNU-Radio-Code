@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from gnuradio import gr
 
 
-class SynchAndChanEst(gr.sync_block):
+class SynchronizeIndex(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
                  num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name,
                  file_name_cest, plot_iq, channel_graph_plot, perfect_chan_est, save_channel_file):
