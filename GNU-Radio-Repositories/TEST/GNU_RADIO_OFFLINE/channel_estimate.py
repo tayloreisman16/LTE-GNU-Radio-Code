@@ -2,7 +2,7 @@ from numpy import zeros, array, tile, reshape, size, newaxis, delete,   \
     sum, prod, divide, sqrt, exp, log10,     \
     floor,   \
     conj, matmul, diag, outer, dot,  \
-    complex64,   \
+    complex64, int16,   \
     pi
 from numpy.fft import fft, ifft
 from numpy.linalg import norm
@@ -112,10 +112,12 @@ class ChannelEstimate(gr.sync_block):
 
         gr.sync_block.__init__(self,
                                name="SynchAndChanEst",
-                               in_sig=[complex64],
+                               in_sig=[complex64, int16],
                                out_sig=[complex64])
 
     def work(self, input_items, output_items):
+        in0 = input_items[0]
+        self.time_synch_ref[0] = input_items[1]
         for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
             data_ptr = int(self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1))
             if self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
