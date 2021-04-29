@@ -110,6 +110,8 @@ class ChannelEstimate(gr.sync_block):
             all_bins = array(list(range(-int(num_bins1 / 2), 0)) + list(range(1, int(num_bins1 / 2) + 1)))
             self.used_bins = (self.nfft + all_bins)
 
+        self.synchdat00 = zeros((1, self.M[0] * self.num_synch_bins), dtype=complex)
+
         gr.sync_block.__init__(self,
                                name="SynchAndChanEst",
                                in_sig=[complex64, int16],
@@ -117,40 +119,64 @@ class ChannelEstimate(gr.sync_block):
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
-        self.time_synch_ref[0] = input_items[1]
-        for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
-            data_ptr = int(self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1))
-            if self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):
+        in1 = input_items[1]
+        self.time_synch_ref[:] = input_items[1][:]
+        for P in list(range(n_trials)):  #TODO: Figure out the reason for this for loop.
+            if self.M[0] * self.rx_b_len + P * self.stride_val + self.nfft + self.start_samp < len(in0):
+                for LL in list(range(self.M[0])):
+                    aaa = self.rx_b_len * LL + P * self.stride_val + self.start_samp
+                    bbb = self.rx_b_len * LL + P * self.stride_val + self.start_samp + self.nfft
+                    self.rx_data_time[0][LL * self.nfft:(LL + 1) * self.nfft] = in0[aaa:bbb]
+                tmp_1vec = zeros((self.M[0], self.nfft), dtype=complex)
+                for LL in list(range(self.M[0])):
+                    tmp_1vec[LL][:] = fft.fft(self.rx_data_time[0][LL * self.nfft:(LL + 1) * self.nfft], self.nfft)
+                    self.synchdat00[0][LL * self.num_synch_bins:(LL + 1) * self.num_synch_bins] = \
+                        tmp_1vec[LL][self.synch_bins_used_P]
 
-                for N in range(self.synch_dat[1]):
-                    start = data_ptr + self.rx_b_len * N
-                    end = data_ptr + self.rx_b_len * N + self.nfft
-                    data_buff_time = in0[start: end]
+        del_vec = self.del_mat_exp[self.time_synch_ref[1]][:]
+        data_recov = matmul(diag(del_vec), synchdat[0])
 
-                    t_vec = fft(data_buff_time, self.nfft)
+        zcwn = [(1.0 / self.SNR_lin) + qq for qq in ones(len(self.zadoff_chu))]
+        tmp_v1 = divide(matmul(diag(data_recov), conj(self.zadoff_chu)), zcwn)
 
-                    freq_data_0 = t_vec[self.bins_used_P]
-                    p_est0 = sqrt(len(freq_data_0)/(dot(freq_data_0, conj(freq_data_0))))
+        chan_est00 = reshape(tmp_v1, (self.M[0], self.L_synch))
+        chan_q, freq_q = self.give_genie_chan()
+        if self.perfect_chan_est == 1:
+            chan_est00 = freq_q
+        chan_est = sum(chan_est00, axis=0) / float(self.M[0])
 
-                    data_recov_0 = freq_data_0 * p_est0
+        chan_est1 = zeros((1, self.nfft), dtype=complex)
+        chan_est1[0][self.synch_bins_used_P] = chan_est
+        self.est_chan_freq_P[self.corr_obs][:] = chan_est1[0][:]
 
-                    arg_val = ([((1j * (2 * pi / self.nfft)) *
-                                 self.time_synch_ref[1]) * kk for kk in self.bins_used_P])
+        if self.count == 0 and self.channel_graph_plot == 1:
+            xax = array(range(0, self.nfft - 2))
+            yax1 = 20 * log10(abs(chan_est1))
+            yax2 = 20 * log10(abs(fft.fft(chan_q, self.nfft)))
+            ypred = [x for i, x in enumerate(yax1[0, 1:]) if i != 31]
+            ygeni = [x for i, x in enumerate(yax2[0, 0, 1:]) if i != 31]
 
-                    data_recov_z = matmul(diag(data_recov_0), exp(arg_val))
-
-                    chan_est_dat = self.est_chan_freq_P[0][self.bins_used_P]
-
-                    chan_mag_z = matmul(diag(chan_est_dat), conj(chan_est_dat))
-                    eq_gain_z = [1.0 / self.SNR_lin + vv for vv in chan_mag_z]
-                    self.eq_gain_q = divide(conj(chan_est_dat), eq_gain_z)
-
-                    self.est_data_freq[P + N][:] = matmul(diag(self.eq_gain_q), data_recov_z)
-        data_demod = delete(self.est_data_freq, list(range(3, self.est_data_freq.shape[0], sum(self.synch_dat))), axis=0)
-        if self.plot_iq == 1:
-            plt.plot(self.est_data_freq[0][:].real, self.est_data_freq[0][:].imag, 'o')
+            plt.plot(xax, ypred, 'r')
+            plt.plot(xax, ygeni, 'b')
             plt.show()
 
+        chan_est_tim = fft.ifft(chan_est1, self.nfft)
+
+        if self.save_channel_file == 1:
+            f = open(str(
+                self.directory_name) + '_' + str(self.file_name_cest), 'wb')
+            pickle.dump(chan_est_tim, f, protocol=2)
+            f.close()
+
+        self.est_chan_time[self.corr_obs][0:self.nfft] = chan_est_tim[0][0:self.nfft]
+        chan_mag = matmul(diag(chan_est), conj(chan_est))
+        eq_gain_0 = [1.0 / self.SNR + vv for vv in chan_mag]
+
+        self.eq_gain = divide(conj(chan_est), eq_gain_0)
+        self.eq_gain_ext = tile(self.eq_gain, self.M[0])
+        self.est_synch_freq[self.corr_obs][:] = matmul(diag(self.eq_gain_ext), data_recov)
+
+        
         data_out = reshape(data_demod[:][:], (1, n_data_symb * size(data_demod, 1)))
 
         if self.count > 0:

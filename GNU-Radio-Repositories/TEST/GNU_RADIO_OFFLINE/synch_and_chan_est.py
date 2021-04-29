@@ -248,7 +248,6 @@ class SynchAndChanEst(gr.sync_block):
                         self.eq_gain_ext = np.tile(self.eq_gain, self.M[0])
                         self.est_synch_freq[self.corr_obs][:] = np.matmul(np.diag(self.eq_gain_ext), data_recov)
                         break
-
         for P in list(range(n_unique_symb)[::sum(self.synch_dat)]):
             data_ptr = int(self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1))
             if self.time_synch_ref[0] + self.M[0] * self.rx_b_len * (P + 1) + self.nfft - 1 <= len(in0):

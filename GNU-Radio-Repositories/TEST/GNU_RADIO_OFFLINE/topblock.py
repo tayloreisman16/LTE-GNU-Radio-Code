@@ -45,8 +45,8 @@ elif pls is False and legacy is False:
     directory_name = 'Output/'
     file_name_cest = 'output_data.pckl'
 
-    #block0
-    #block1
+    block0 = SynchronizeIndex()
+    block1 = ChannelEstimate()
     #block2
     pass
 elif pls is True:

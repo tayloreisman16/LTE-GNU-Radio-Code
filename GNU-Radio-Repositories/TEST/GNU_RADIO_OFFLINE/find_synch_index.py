@@ -14,8 +14,7 @@ from gnuradio import gr
 
 class SynchronizeIndex(gr.sync_block):
     def __init__(self, num_ofdm_symb, nfft, cp_len,
-                 num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name,
-                 file_name_cest, plot_iq, channel_graph_plot, perfect_chan_est, save_channel_file):
+                 num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name):
         self.num_ofdm_symb = num_ofdm_symb
         self.nfft = nfft
         self.cp_len = cp_len
@@ -122,8 +121,6 @@ class SynchronizeIndex(gr.sync_block):
         out1 = output_items[1]
 
         n_trials = int(around(len(in0) / self.stride_val))
-        n_unique_symb = int(floor(len(in0) / self.rx_b_len))
-        n_data_symb = int(n_unique_symb * (self.synch_dat[1] / sum(self.synch_dat)))
 
         for P in list(range(n_trials)):
             if self.M[0] * self.rx_b_len + P * self.stride_val + self.nfft + self.start_samp < len(in0):
@@ -202,7 +199,8 @@ class SynchronizeIndex(gr.sync_block):
                         break
         if self.count > 0:
             out0[:] = in0
-            out1[0:size(self.time_synch_ref, 1)] = self.time_synch_ref[:, newaxis]
+            # out1[0:size(self.time_synch_ref, 1)] = self.time_synch_ref[:, newaxis]
+            out1[:] = self.time_synch_ref[:]
 
         self.count += 1
         return len(output_items[0])
