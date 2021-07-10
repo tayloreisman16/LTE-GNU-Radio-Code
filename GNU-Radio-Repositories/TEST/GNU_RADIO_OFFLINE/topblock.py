@@ -14,6 +14,8 @@ channel_profile = 'Fading'
 nfft = 64
 cp_len = 16
 num_synch_bins = nfft - 2
+if pls is True:
+    num_used_bins = num_synch_bins
 num_data_bins = 60
 synch_data = [1, 3]
 
