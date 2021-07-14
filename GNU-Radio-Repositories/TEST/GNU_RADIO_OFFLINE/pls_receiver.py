@@ -1,6 +1,10 @@
-from numpy import conj, sqrt, convolve, zeros, var, diag, angle, dot, exp, array, real, argwhere, complex64
-from numpy.random import normal
-from numpy.fft import fft
+from numpy import zeros, array, tile, reshape, size, newaxis, delete,   \
+    sum, prod, divide, sqrt, exp, log10,     \
+    floor,   \
+    conj, matmul, diag, outer, dot,  \
+    complex64, int16,   \
+    pi
+from numpy.fft import fft, ifft
 from numpy.linalg import svd
 
 
@@ -68,7 +72,9 @@ class PhyLayerSecReceiver:
             rx_sigA = rx_signal
             UA, _, VA = self.sv_decomp(rx_sigA)
             bits_sb_estimateB = self.PMI_estimate(VA, self.bit_codebook)[1]
-            bits_subbandA = self.secret_key_gen()
+
+            #Load Secret Data Here
+            bits_subbandA = pckl.load(open("data.pckl", 'rb'))
             FA = self.precoder_select(bits_subbandA, self.bit_codebook)
             for sb in range(0, self.num_subbands):
                 tx_sig = np.dot(np.conj(UA[sb]), np.conj(FA[sb].T))
