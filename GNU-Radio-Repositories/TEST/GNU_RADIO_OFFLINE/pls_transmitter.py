@@ -6,7 +6,9 @@ from numpy import zeros, ones, array, tile, reshape, size, newaxis, delete, conc
     pi
 from numpy.random import uniform
 from numpy.fft import fft, ifft
+from numpy.linalg import qr
 import pickle as pckl
+import pmt
 
 class PhyLayerSecTransmitter:
     def __init__(self, bandwidth, bin_spacing, num_ant, bit_codebook, NFFT, CP, num_used_bins):
@@ -55,6 +57,7 @@ class PhyLayerSecTransmitter:
 
     def work(self, input_items, output_items):
         in0 = input_items[0]
+        out = output_items[0]
 
         rx_state = state
         data = pckl
@@ -66,13 +69,13 @@ class PhyLayerSecTransmitter:
             GA = self.unitary_gen()
             tx_sig = GA
 
-        if tx_node == 'Bob' and len(args) == 5:
+        if rx_state == 'S2Fin':
             ## 2. Bob to Alice #TODO: State 3 (G1r)
             print('Entering State 3')
             FB = in0
 
 
-        elif tx_node == 'Alice' and len(args) == 5:
+        elif rx_state == 'S4Fin':
             ## 3. Alice to Bob #TODO: State 5 (G2r/Private Data)
             print('Entering State 5')
             FA = in0
@@ -81,7 +84,7 @@ class PhyLayerSecTransmitter:
                 tx_sig = dot(conj(UA[sb]), conj(FA[sb]).T)
 
 
-        out[:] = tx_sig
+        out[:] = tx_sig[:]
         return (output_items[0])
 
     def unitary_gen(self):
@@ -115,7 +118,7 @@ class PhyLayerSecTransmitter:
             # print(symb_start, symb_end)
             if int(symb) == 0:
                 buffer[:, symb_start: symb_end * 2] = cp_block
-                synch_symb_count += 1
+                synch_symb_count += 2
                 total_symb_count += 2
             else:
                 # print(symb, symb_start, symb_end)

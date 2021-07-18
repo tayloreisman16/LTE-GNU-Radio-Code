@@ -10,10 +10,11 @@ import numpy as np
 import pickle
 # import datetime
 import matplotlib.pyplot as plt
-from gnuradio import gr
+# from gnuradio import gr
 
 
-class SynchAndChanEst(gr.sync_block):
+# class SynchAndChanEst(gr.sync_block):
+class SynchAndChanEst():
     def __init__(self, num_ofdm_symb, nfft, cp_len,
                  num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name,
                  file_name_cest, plot_iq, channel_graph_plot, perfect_chan_est, save_channel_file):
@@ -112,10 +113,10 @@ class SynchAndChanEst(gr.sync_block):
             all_bins = np.array(list(range(-int(num_bins1 / 2), 0)) + list(range(1, int(num_bins1 / 2) + 1)))
             self.used_bins = (self.nfft + all_bins)
 
-        gr.sync_block.__init__(self,
-                               name="SynchAndChanEst",
-                               in_sig=[np.complex64],
-                               out_sig=[np.complex64])
+        # gr.sync_block.__init__(self,
+        #                        name="SynchAndChanEst",
+        #                        in_sig=[np.complex64],
+        #                        out_sig=[np.complex64])
 
     def give_genie_chan(self):
         h = np.zeros((self.num_ant_txrx, self.num_ant_txrx), dtype=object)

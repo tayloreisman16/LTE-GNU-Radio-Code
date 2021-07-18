@@ -9,10 +9,11 @@ from numpy.fft import fft, ifft
 from numpy.linalg import norm
 import pickle
 import matplotlib.pyplot as plt
-from gnuradio import gr
+# from gnuradio import gr
 
 
-class SynchronizeIndex(gr.sync_block):
+# class SynchronizeIndex(gr.sync_block):
+class SynchronizeIndex():
     def __init__(self, num_ofdm_symb, nfft, cp_len,
                  num_synch_bins, synch_dat, num_data_bins, channel, snr, scale_factor_gate, directory_name,
                  file_name_cest, plot_iq, channel_graph_plot, perfect_chan_est, save_channel_file):
@@ -111,10 +112,10 @@ class SynchronizeIndex(gr.sync_block):
             all_bins = array(list(range(-int(num_bins1 / 2), 0)) + list(range(1, int(num_bins1 / 2) + 1)))
             self.used_bins = (self.nfft + all_bins)
 
-        gr.sync_block.__init__(self,
-                               name="SynchAndChanEst",
-                               in_sig=[complex64],
-                               out_sig=[complex64, int16])
+        # gr.sync_block.__init__(self,
+        #                        name="SynchAndChanEst",
+        #                        in_sig=[complex64],
+        #                        out_sig=[complex64, int16])
 
     def work(self, input_items, output_items):
         in0 = input_items[0]

@@ -1,11 +1,13 @@
-from numpy import zeros, array, tile, reshape, size, newaxis, delete,   \
-    sum, prod, divide, sqrt, exp, log10,     \
-    floor,   \
+from numpy import zeros, array, tile, reshape, size, newaxis, delete, real,  \
+    sum, prod, divide, sqrt, exp, log10, angle,    \
+    floor, argwhere,   \
     conj, matmul, diag, outer, dot,  \
     complex64, int16,   \
     pi
 from numpy.fft import fft, ifft
+from numpy.random import randint
 from numpy.linalg import svd
+import pickle as pckl
 
 
 class PhyLayerSecReceiver:
@@ -51,9 +53,9 @@ class PhyLayerSecReceiver:
             rx_sigB0 = rx_signal
             UB0 = self.sv_decomp(rx_sigB0)[0]
             bits_subbandB = self.secret_key_gen()
-            FB = self.precoder_select(bits_subbandB, codebook)
+            FB = self.precoder_select(bits_subbandB, self.bit_codebook)
             for sb in range(0, self.num_subbands):
-                tx_sig = np.dot(np.conj(UB0[sb]), np.conj(FB[sb].T))
+                tx_sig = dot(conj(UB0[sb]), conj(FB[sb].T))
             out[:] = tx_sig
             self.message_port_pub(pmt.intern("RXState"), 'S2Fin')
 
@@ -77,7 +79,7 @@ class PhyLayerSecReceiver:
             bits_subbandA = pckl.load(open("data.pckl", 'rb'))
             FA = self.precoder_select(bits_subbandA, self.bit_codebook)
             for sb in range(0, self.num_subbands):
-                tx_sig = np.dot(np.conj(UA[sb]), np.conj(FA[sb].T))
+                tx_sig = dot(conj(UA[sb]), conj(FA[sb].T))
             out[:] = FA
             self.message_port_pub(pmt.intern("RXState"), 'S4Fin')
 
