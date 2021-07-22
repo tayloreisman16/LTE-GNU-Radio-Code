@@ -456,6 +456,7 @@ class PhyLayerSecAIO:
         # print(buffer_rx_data.shape)
         return buffer_rx_data
 
+
     def channel_estimate(self, buffer_rx_data, ref_sig):
         """
         In PLS, only refeence signals are sent. So we use the data symbols to estimate the chanel rather than the synch.
@@ -467,9 +468,9 @@ class PhyLayerSecAIO:
                                     self.subband_size), dtype=complex)
         chan_est_bins = zeros((self.num_ant, self.num_data_symb * self.num_data_bins), dtype=complex)
         count = 0
-        SNR_lin = 10 ** (100 / 10)
+
         for symb in range(self.num_data_symb):
-            symb_start = symb*self.nfft
+            symb_start = symb * self.nfft
             symb_end = symb_start + self.nfft
 
             used_symb_start = symb*self.num_data_bins
@@ -480,28 +481,13 @@ class PhyLayerSecAIO:
                 data_in_used_bins = data_fft[self.used_data_bins]
 
                 est_channel = data_in_used_bins*conj(ref_sig[symb, :])/(abs(ref_sig[symb, :]))
-                # chan_est_bins[ant, used_symb_start: used_symb_end] = est_channel
-                est_channel = data_in_used_bins*conj(ref_sig[symb, :])/(1 + (1 / SNR_lin))
+                chan_est_bins[ant, used_symb_start: used_symb_end] = est_channel
+                # est_channel = data_in_used_bins*conj(ref_sig[symb, :])/(1 + (1 / SNR_lin))
                 for subband_index in range(int(self.num_data_bins / self.subband_size)):
                     start = subband_index * self.subband_size
                     end = start + self.subband_size
                     chan_est_bins_sort[:, symb, subband_index, :] = est_channel[start: end]
                 count += 1
-        # self.channel_check(chan_est_bins_sort, ref_sig, precoders)
-        # for subband_group in range(int(self.num_data_symb * self.num_data_bins / (self.subband_size * self.num_ant))):
-        #     start = subband_group * self.subband_size
-        #     end = start + self.subband_size
-        #     start0 = subband_group * self.num_data_bins
-        #     end0 = start0 + self.subband_size
-        #     start1 = subband_group * self.num_data_bins + self.subband_size
-        #     end1 = start1 + self.subband_size
-        #     chan_ant_0_subband_0[start: end] = chan_est_bins[0, start0: end0]
-        #     chan_ant_1_subband_1[start: end] = chan_est_bins[0, start1: end1]
-        #     chan_ant_1_subband_0[start: end] = chan_est_bins[1, start0: end0]
-        #     chan_ant_1_subband_1[start: end] = chan_est_bins[1, start1: end1]
-        #
-        # channel_power = sum((chan_est_bins * conj(chan_est_bins))) / chan_est_bins.shape[1]
-        # chan_est_norm = chan_est_bins / (sqrt(channel_power) * sqrt(2))
 
         return chan_est_bins
 
