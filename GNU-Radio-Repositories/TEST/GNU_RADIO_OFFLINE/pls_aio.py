@@ -46,6 +46,7 @@ class PhyLayerSecAIO:
         neg_data_bins = list(range(dc_index - int(self.num_data_bins / 2), dc_index))
         pos_data_bins = list(range(dc_index + 1, dc_index + int(self.num_data_bins / 2) + 1))
         self.used_data_bins = array(neg_data_bins + pos_data_bins)
+        print(f'Data Bin Index {self.used_data_bins}')
 
         neg_synch_bins = list(range(dc_index - int(self.num_synch_bins / 2), dc_index))
         pos_synch_bins = list(range(dc_index + 1, dc_index + int(self.num_synch_bins / 2) + 1))
@@ -121,9 +122,11 @@ class PhyLayerSecAIO:
                                                                                         self.lsv_B0)
             plt.plot(buffer_rx_time[0].real)
             plt.plot(buffer_rx_time[0].imag)
+            plt.title('TX Signal from Bob to Alice @ Bob Ant: 0')
+            plt.show()
             plt.plot(buffer_rx_time[1].real)
             plt.plot(buffer_rx_time[1].imag)
-            plt.title('TX Signal from Bob to Alice @ Bob')
+            plt.title('TX Signal from Bob to Alice @ Bob Ant: 1')
             plt.show()
         elif self.state == 2:
             self.lsv_A, self.rsv_A, obs_info_bits_A = self.receive_sig_process(buffer_tx_time, self.ref_sig_B)
@@ -146,15 +149,20 @@ class PhyLayerSecAIO:
 
         for p in range(0, num_precoders):
             precoder = zeros((self.num_ant, self.num_ant), dtype=complex)
-            for m in range(0, self.num_ant):
+            for m in range(0, 2, self.num_ant * 2):
                 for n in range(0, self.num_ant):
                     w = exp(1j*2*pi*(n/self.num_ant)*(m + p/num_precoders))
-                    precoder[n, m] = (1/sqrt(self.num_ant))*w
+                    precoder[n, m] = (1/sqrt(self.num_ant)) * w
 
             codebook[p] = precoder
-            plt.title(f'Codebook Classification: {p}')
-            plt.scatter(codebook[p].real, codebook[p].imag)
-            plt.show()
+        for p in range(0, num_precoders):
+            for m in range(self.num_ant):
+                for n in range(self.num_ant):
+                    plt.title(f'Codebook Classification: Binary {p}, RX Antenna {m}, TX Antenna {n}')
+                    plt.xlim(-1, 1)
+                    plt.ylim(-1, 1)
+                    plt.scatter(codebook[p][n, m].real, codebook[p][n, m].imag)
+                    plt.show()
 
         return codebook
 
@@ -286,6 +294,8 @@ class PhyLayerSecAIO:
                 dft_precoder[symb, sb] = self.bit_codebook[codebook_index]
         plt.title('DFT Precoder: Binary-Codebook 1')
         plt.plot(dft_precoder[1, 1].real, dft_precoder[1, 1].imag, 'o')
+        plt.xlim(-1, 1)
+        plt.ylim(-1, 1)
         plt.show()
 
         return dft_precoder
@@ -467,9 +477,9 @@ class PhyLayerSecAIO:
                                     self.subband_size), dtype=complex)
         chan_est_bins = zeros((self.num_ant, self.num_data_symb * self.num_data_bins), dtype=complex)
         count = 0
-        SNR_lin = 10 ** (100 / 10)
+
         for symb in range(self.num_data_symb):
-            symb_start = symb*self.nfft
+            symb_start = symb * self.nfft
             symb_end = symb_start + self.nfft
 
             used_symb_start = symb*self.num_data_bins
@@ -480,8 +490,8 @@ class PhyLayerSecAIO:
                 data_in_used_bins = data_fft[self.used_data_bins]
 
                 est_channel = data_in_used_bins*conj(ref_sig[symb, :])/(abs(ref_sig[symb, :]))
-                # chan_est_bins[ant, used_symb_start: used_symb_end] = est_channel
-                est_channel = data_in_used_bins*conj(ref_sig[symb, :])/(1 + (1 / SNR_lin))
+                chan_est_bins[ant, used_symb_start: used_symb_end] = est_channel
+                # est_channel = data_in_used_bins*conj(ref_sig[symb, :])/(1 + (1 / SNR_lin))
                 for subband_index in range(int(self.num_data_bins / self.subband_size)):
                     start = subband_index * self.subband_size
                     end = start + self.subband_size
@@ -569,8 +579,12 @@ class PhyLayerSecAIO:
         if self.state == 2:
             plt.title(f'RX Precoder: Binary 0')
             plt.scatter(rx_precoder[0, 0].real, rx_precoder[0, 0].imag)
+            plt.xlim(-1, 1)
+            plt.ylim(-1, 1)
             plt.show()
             plt.title(f'RX Precoder: Binary 1')
+            plt.xlim(-1, 1)
+            plt.ylim(-1, 1)
             plt.scatter(rx_precoder[1, 1].real, rx_precoder[1, 1].imag)
             plt.show()
         for symb in range(self.num_data_symb):
@@ -579,8 +593,13 @@ class PhyLayerSecAIO:
 
                 for prec in range(len(self.bit_codebook)):
                     diff = rx_precoder[symb, sb] - self.bit_codebook[prec]
-                    # plt.scatter(rx_precoder[symb, sb].real, rx_precoder[symb, sb].imag)
-                    # plt.show()
+                    if symb == 1 and sb == 1:
+                        print('Diff: ', diff)
+                        plt.scatter(rx_precoder[symb, sb].real, rx_precoder[symb, sb].imag)
+                        plt.xlim(-1, 1)
+                        plt.ylim(-1, 1)
+                        plt.title('Recovered Precoder Binary 1')
+                        plt.show()
                     diff_squared = real(diff*conj(diff))
                     dist[prec] = sqrt(diff_squared.sum())
                 min_dist = min(dist)
